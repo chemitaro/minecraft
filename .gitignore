@@ -1,0 +1,77 @@
+# Python関連の無視設定
+
+# Pythonバイトコード
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 環境設定
+.env
+.venv/
+venv/
+ENV/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# パッケージ関連
+*.egg-info/
+*.egg
+*.eggs/
+
+# ビルド関連のファイル
+build/
+dist/
+*.wheel
+*.egg-info/
+*.manifest
+
+# ログファイル
+*.log
+
+# Jupyter Notebookのチェックポイント
+.ipynb_checkpoints
+
+# MyPy、Pyrightなどの型チェック用
+.mypy_cache/
+.pytype/
+dmypy.json
+.pyre/
+
+# IDE/エディタ
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# macOS関連のファイル
+.DS_Store
+
+# Coverage
+.coverage
+.tox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# pytest
+.pytest_cache/
+
+# SQLite データベース
+*.sqlite3
+
+# Django関連
+*.log
+db.sqlite3
+media/
+staticfiles/
+
+# Local stack
+.localstack/
+
+# Docker
+*.dockerignore
+docker-compose.override.yml
