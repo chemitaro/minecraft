@@ -1,6 +1,7 @@
 import fnmatch
 from typing import List
 import minecraft
+import time
 
 
 # アイテムの回収場所の座標座標
@@ -29,15 +30,20 @@ def agent_item_delivery() -> None:
     """
     エージェントのアイテムを回収場所にドロップする
     """
-    befor_position = agent.positopn
+    befor_position = agent.position
 
     agent.teleport(item_collection_location)
     time.sleep(1)
-    agent.drop("up")
+    for slot in range(1, 28):
+        agent.drop("up", 64, slot)
     time.sleep(1)
     agent.teleport(befor_position)
 
-agent_item_delivery()
+def check_and_clear_agent_inventory() -> None:
+    if not agent.get_item(27).id == "air":
+        agent_item_delivery()
+
+check_and_clear_agent_inventory()
 
 
 def set_agent_azimuth(azimuth: int):
@@ -56,8 +62,6 @@ def agent_turn_away_from_player() -> None:
     """
     agent_position = agent.position
     player_positoon = player.position
-    agent.say(agent_position)
-    agent.say(player_positoon)
     azimuth = None
 
     # x軸かz軸でどちらが近いか判断する
@@ -77,7 +81,6 @@ def agent_turn_away_from_player() -> None:
         else:
             # 南向き
             azimuth = 0
-    agent.say(azimuth)
     
     set_agent_azimuth(azimuth)
 
@@ -188,7 +191,7 @@ def is_mining_position() -> bool:
 
     if position_x % 8 == 0 and position_y % 8 == 0:
         return True
-    elif (position_x + 2) % 8 == 0 and (position_y + 2) % 8 == 0:
+    elif (position_x + 2) % 8 == 0 and (position_y + 4) % 8 == 0:
         return True
     else:
         return False
@@ -229,6 +232,8 @@ def mining(count: int) -> None:
     
     for step in range(count):
         agent.move("back")
+    agent_item_delivery()
+    agent.say("mining: finish")
     
 
 def branch_mining() -> bool:
@@ -249,15 +254,16 @@ def branch_mining() -> bool:
             agent.collect()
         agent.move("forward")
 
-        if agent.detect("right"):
-            agent.turn("right")
-            mining()
-            agent.turn("left")
-        
-        if agent.detect("left"):
-            agent.turn("left")
-            mining()
-            agent.turn("right")
+        if is_mining_position():
+            if agent.detect("right"):
+                agent.turn("right")
+                mining(500)
+                agent.turn("left")
+            
+            if agent.detect("left"):
+                agent.turn("left")
+                mining(500)
+                agent.turn("right")
 
 
 
@@ -287,7 +293,4 @@ def process_chat_command(message, sender, receiver, message_type):
             agent.say(agent.inspect("forward"))
         elif command == "what_item":
             agent.say(agent.get_item(1))
-
-
-
 
