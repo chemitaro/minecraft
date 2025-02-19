@@ -1,5 +1,11 @@
 import fnmatch
 from typing import List
+import minecraft
+
+
+# アイテムの回収場所の座標座標
+item_collection_location = [0, 0, 0]
+
 
 # 有益な地下資源の名称
 underground_resource_list = ["*_ore", "ancient_debris"]
@@ -18,6 +24,20 @@ def show_agent_item_list():
     for i in range(1, 28):
         item = agent.get_item(i)
         agent.say(f"{i} : {item.id} {item.stack_size}/{item.max_stack_size}")
+
+def agent_item_delivery() -> None:
+    """
+    エージェントのアイテムを回収場所にドロップする
+    """
+    befor_position = agent.positopn
+
+    agent.teleport(item_collection_location)
+    time.sleep(1)
+    agent.drop("up")
+    time.sleep(1)
+    agent.teleport(befor_position)
+
+agent_item_delivery()
 
 
 def set_agent_azimuth(azimuth: int):
@@ -58,7 +78,7 @@ def agent_turn_away_from_player() -> None:
             # 南向き
             azimuth = 0
     agent.say(azimuth)
-
+    
     set_agent_azimuth(azimuth)
 
 
@@ -100,7 +120,6 @@ def get_opposite_direction(direction: str) -> str:
         agent.say(f"入力の方向が正しくありません: {direction}")
         return ""
 
-
 agent.say(get_opposite_direction("forward"))
 
 
@@ -128,10 +147,10 @@ def get_agent_storage_socket_index(items: List[str]) -> int:
     """
     指定したアイテムがエージェントストレージのどのソケットに格納されているか確認し、
     ソケット番号を返却します。
-
+    
     Parameters:
         items (str): 検索対象のアイテム名称。
-
+    
     Returns:
         int: アイテムが格納されているソケット番号。該当するソケットがない場合は、例外を発生させるか
              特定の値（例: -1）を返却する設計とします。
@@ -143,7 +162,7 @@ def get_agent_storage_socket_index(items: List[str]) -> int:
             if fnmatch.fnmatch(check_item.id, item_name):
                 return socket_index
     return -1
-
+ 
 
 def agent_put_item(direction: str, item_names: List[str]) -> None:
     """
@@ -191,6 +210,8 @@ def explore_and_mine_resources(block_list: List[str]):
             explore_and_mine_resources(block_list)
 
             agent.move(get_opposite_direction(direction))
+            
+
 
 
 def mining(count: int) -> None:
@@ -205,21 +226,39 @@ def mining(count: int) -> None:
 
         explore_and_mine_resources(underground_resource_list)
         agent.move("forward")
-
+    
     for step in range(count):
         agent.move("back")
-
+    
 
 def branch_mining() -> bool:
     """
     ブランチマイニングを実行する
     """
     length = 1000
+    # 掘削方向の西側を向く
+    set_agent_azimuth(-90)
+    if not agent.position.y % 4 == 0:
+        agent.say("高さが間違っています")
+        return False
+
     for step in range(length):
         agent.say(f"branch_mining: {step}/{length}")
+        if agent.detect("forward"):
+            agent.destroy("forward")
+            agent.collect()
+        agent.move("forward")
 
+        if agent.detect("right"):
+            agent.turn("right")
+            mining()
+            agent.turn("left")
+        
+        if agent.detect("left"):
+            agent.turn("left")
+            mining()
+            agent.turn("right")
 
-branch_mining()
 
 
 @on_event("PlayerMessage")
@@ -240,9 +279,15 @@ def process_chat_command(message, sender, receiver, message_type):
             agent_teleport_player()
         elif command == "agent_teleport":
             agent_teleport(chunked_messages[1], chunked_messages[2], chunked_messages[3])
+        elif command == "branch_mining":
+            branch_mining()
         elif command == "item_list":
             show_agent_item_list()
         elif command == "what_block":
             agent.say(agent.inspect("forward"))
         elif command == "what_item":
             agent.say(agent.get_item(1))
+
+
+
+
