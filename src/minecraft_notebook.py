@@ -12,6 +12,9 @@ normal_block_list = ["cobblestone", "granite", "andesite", "dirt", "deepslate", 
 
 
 def show_agent_item_list():
+    """
+    エージェントのアイテム一覧を表示
+    """
     for i in range(1, 28):
         item = agent.get_item(i)
         agent.say(f"{i} : {item.id} {item.stack_size}/{item.max_stack_size}")
@@ -116,11 +119,39 @@ def get_agent_storage_socket_index(items: List[str]) -> int:
  
 
 def agent_put_item(direction: str, item_names: List[str]) -> None:
+    """
+    エージェントが指定したアイテムを設置する
+    """
     socket_index = get_agent_storage_socket_index(item_names)
     if socket_index < 1:
         agent.say(f"{item_names}を持っていません")
         return None
     agent.place(direction, socket_index)
+
+
+def is_mining_position() -> bool:
+    """
+    指定された位置情報がマイニング対象のポジションであるかどうかを判定し、
+    結果をブール値（True/False）で返却します。
+    掘るy軸の高さは4の倍数倍数
+    x軸は4の倍数
+
+    Returns:
+        bool: 指定位置がマイニング対象である場合は True、そうでない場合は False。
+    """
+    position_x = agent.position.x
+    position_y = agent.position.y
+
+    if position_x % 8 == 0 and position_y % 8 == 0:
+        return True
+    elif (position_x + 2) % 8 == 0 and (position_y + 2) % 8 == 0 
+        return True
+    else:
+        return False
+    
+
+
+
 
 
 
