@@ -1,7 +1,5 @@
 import fnmatch
 from typing import List
-import minecraft
-
 
 # 有益な地下資源の名称
 underground_resource_list = ["*_ore", "ancient_debris"]
@@ -60,7 +58,7 @@ def agent_turn_away_from_player() -> None:
             # 南向き
             azimuth = 0
     agent.say(azimuth)
-    
+
     set_agent_azimuth(azimuth)
 
 
@@ -102,6 +100,7 @@ def get_opposite_direction(direction: str) -> str:
         agent.say(f"入力の方向が正しくありません: {direction}")
         return ""
 
+
 agent.say(get_opposite_direction("forward"))
 
 
@@ -129,10 +128,10 @@ def get_agent_storage_socket_index(items: List[str]) -> int:
     """
     指定したアイテムがエージェントストレージのどのソケットに格納されているか確認し、
     ソケット番号を返却します。
-    
+
     Parameters:
         items (str): 検索対象のアイテム名称。
-    
+
     Returns:
         int: アイテムが格納されているソケット番号。該当するソケットがない場合は、例外を発生させるか
              特定の値（例: -1）を返却する設計とします。
@@ -144,7 +143,7 @@ def get_agent_storage_socket_index(items: List[str]) -> int:
             if fnmatch.fnmatch(check_item.id, item_name):
                 return socket_index
     return -1
- 
+
 
 def agent_put_item(direction: str, item_names: List[str]) -> None:
     """
@@ -192,8 +191,6 @@ def explore_and_mine_resources(block_list: List[str]):
             explore_and_mine_resources(block_list)
 
             agent.move(get_opposite_direction(direction))
-            
-
 
 
 def mining(count: int) -> None:
@@ -208,13 +205,21 @@ def mining(count: int) -> None:
 
         explore_and_mine_resources(underground_resource_list)
         agent.move("forward")
-    
+
     for step in range(count):
         agent.move("back")
-    
 
-mining(20)
 
+def branch_mining() -> bool:
+    """
+    ブランチマイニングを実行する
+    """
+    length = 1000
+    for step in range(length):
+        agent.say(f"branch_mining: {step}/{length}")
+
+
+branch_mining()
 
 
 @on_event("PlayerMessage")
@@ -241,16 +246,3 @@ def process_chat_command(message, sender, receiver, message_type):
             agent.say(agent.inspect("forward"))
         elif command == "what_item":
             agent.say(agent.get_item(1))
-
-
-
-
-
-
-
-
-
-
-
-
-
