@@ -8,13 +8,14 @@ underground_resource_list = ["*_ore", "ancient_debris"]
 liquid_block_list = ["water", "lava"]
 
 # 普通のブロックの名称
-nomal_block_list = ["cobblestone", "granite", "andesite", "dirt", "deepslate", "blackstone", "stone"]
+normal_block_list = ["cobblestone", "granite", "andesite", "dirt", "deepslate", "blackstone", "stone"]
 
 
 def show_agent_item_list():
     for i in range(1, 28):
         item = agent.get_item(i)
         agent.say(f"{i} : {item.id} {item.stack_size}/{item.max_stack_size}")
+
 
 def set_agent_azimuth(azimuth: int):
     """
@@ -24,6 +25,7 @@ def set_agent_azimuth(azimuth: int):
         if agent.rotation == azimuth:
             break
         agent.turn("right")
+
 
 def agent_turn_away_from_player() -> None:
     """
@@ -56,6 +58,7 @@ def agent_turn_away_from_player() -> None:
     
     set_agent_azimuth(azimuth)
 
+
 def agent_teleport_player():
     """
     エージェントがプレイヤーの前にテレポートする
@@ -63,11 +66,13 @@ def agent_teleport_player():
     agent.teleport(["^0", "^0", "^1"])
     agent_turn_away_from_player()
 
+
 def agent_teleport(x, y, z):
     """
     エージェントを指定した座標にテレポートさせる
     """
     agent.teleport([x, y, z])
+
 
 def is_block_list_match_direction(direction: str, block_list: list) -> bool:
     """
@@ -87,6 +92,7 @@ def is_block_list_match_direction(direction: str, block_list: list) -> bool:
         if fnmatch.fnmatch(target.id, block):
             return True
     return False
+
 
 def get_agent_storage_socket_index(items: List[str]) -> int:
     """
@@ -108,7 +114,15 @@ def get_agent_storage_socket_index(items: List[str]) -> int:
                 return socket_index
     return -1
  
-agent.say(get_agent_storage_socket_index(["stone"]))
+
+def agent_put_item(direction: str, item_names: List[str]) -> None:
+    socket_index = get_agent_storage_socket_index(item_names)
+    if socket_index < 1:
+        agent.say(f"{item_names}を持っていません")
+        return None
+    agent.place(direction, socket_index)
+
+
 
 
 
