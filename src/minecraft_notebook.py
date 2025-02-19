@@ -184,7 +184,7 @@ def explore_and_mine_resources(block_list: List[str]):
     directions = ["up", "left", "down", "right", "back", "forward"]
     for direction in directions:
         if is_block_list_match_direction(direction, block_list):
-            agent.say(f"find: {agent.inspect(direction)} at {agent.position}")
+            agent.say(f"find: {agent.inspect(direction).id} at {agent.position}")
             agent.destroy(direction)
             agent.collect()
             agent.move(direction)
@@ -201,12 +201,12 @@ def mining(count: int) -> None:
     資源を収集しながら掘り進める
     """
     for step in range(count):
+        agent.say(f"mining: {step}/{count}")
         if agent.detect("forward"):
             agent.destroy("forward")
             agent.collect()
 
-            explore_and_mine_resources(underground_resource_list)
-
+        explore_and_mine_resources(underground_resource_list)
         agent.move("forward")
     
     for step in range(count):
@@ -241,6 +241,15 @@ def process_chat_command(message, sender, receiver, message_type):
             agent.say(agent.inspect("forward"))
         elif command == "what_item":
             agent.say(agent.get_item(1))
+
+
+
+
+
+
+
+
+
 
 
 
