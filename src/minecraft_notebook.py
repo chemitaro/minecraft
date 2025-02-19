@@ -79,6 +79,32 @@ def agent_teleport(x, y, z):
     agent.teleport([x, y, z])
 
 
+def get_opposite_direction(direction: str) -> str:
+    """
+    指定された方向を反対方向に変換して返す関数。
+
+    例:
+      "up" → "down"
+    """
+    if direction == "forward":
+        return "back"
+    elif direction == "back":
+        return "forward"
+    elif direction == "up":
+        return "down"
+    elif direction == "down":
+        return "up"
+    elif direction == "left":
+        return "right"
+    elif direction == "right":
+        return "left"
+    else:
+        agent.say(f"入力の方向が正しくありません: {direction}")
+        return ""
+
+agent.say(get_opposite_direction("forward"))
+
+
 def is_block_list_match_direction(direction: str, block_list: list) -> bool:
     """
     指定された方向において、ブロックのリストが所定のパターンにマッチするかを判定し、
@@ -150,8 +176,44 @@ def is_mining_position() -> bool:
         return False
 
 
+def explore_and_mine_resources(block_list: List[str]):
+    """
+    プレイヤーが探索しながら資源を検出し、自動で採掘する処理を実行する関数。
+    """
+    # 採掘処理の実装をここに記述
+    directions = ["up", "left", "down", "right", "back", "forward"]
+    for direction in directions:
+        if is_block_list_match_direction(direction, block_list):
+            agent.say(f"find: {agent.inspect(direction)} at {agent.position}")
+            agent.destroy(direction)
+            agent.collect()
+            agent.move(direction)
+
+            explore_and_mine_resources(block_list)
+
+            agent.move(get_opposite_direction(direction))
+            
 
 
+
+def mining(count: int) -> None:
+    """
+    資源を収集しながら掘り進める
+    """
+    for step in range(count):
+        if agent.detect("forward"):
+            agent.destroy("forward")
+            agent.collect()
+
+            explore_and_mine_resources(underground_resource_list)
+
+        agent.move("forward")
+    
+    for step in range(count):
+        agent.move("back")
+    
+
+mining(20)
 
 
 
