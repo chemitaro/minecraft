@@ -1,5 +1,7 @@
 import fnmatch
 from typing import List
+import minecraft
+
 
 # 有益な地下資源の名称
 underground_resource_list = ["*_ore", "ancient_debris"]
@@ -133,8 +135,6 @@ def is_mining_position() -> bool:
     """
     指定された位置情報がマイニング対象のポジションであるかどうかを判定し、
     結果をブール値（True/False）で返却します。
-    掘るy軸の高さは4の倍数倍数
-    x軸は4の倍数
 
     Returns:
         bool: 指定位置がマイニング対象である場合は True、そうでない場合は False。
@@ -144,13 +144,10 @@ def is_mining_position() -> bool:
 
     if position_x % 8 == 0 and position_y % 8 == 0:
         return True
-    elif (position_x + 2) % 8 == 0 and (position_y + 2) % 8 == 0 
+    elif (position_x + 2) % 8 == 0 and (position_y + 2) % 8 == 0:
         return True
     else:
         return False
-    
-
-
 
 
 
