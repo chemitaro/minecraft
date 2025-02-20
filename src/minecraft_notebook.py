@@ -5,39 +5,32 @@ import time
 
 
 # アイテムの回収場所の座標座標
-item_collection_location = [0, 0, 0]
-
-
+item_collection_location = [-156, 71, 1262]
 # 有益な地下資源の名称
 underground_resource_list = ["*_ore", "ancient_debris"]
-
 # 液体ブロック
 liquid_block_list = ["water", "lava"]
-
 # 普通のブロックの名称
 normal_block_list = ["cobblestone", "granite", "andesite", "dirt", "deepslate", "blackstone", "stone"]
 
 
 def show_agent_item_list():
-    """
-    エージェントのアイテム一覧を表示
-    """
+    """エージェントのアイテム一覧を表示"""
     for i in range(1, 28):
         item = agent.get_item(i)
         agent.say(f"{i} : {item.id} {item.stack_size}/{item.max_stack_size}")
 
-def agent_item_delivery() -> None:
-    """
-    エージェントのアイテムを回収場所にドロップする
-    """
-    befor_position = agent.position
 
+def agent_item_delivery() -> None:
+    """エージェントのアイテムを回収場所にドロップする"""
+    befor_position = agent.position
     agent.teleport(item_collection_location)
     time.sleep(1)
     for slot in range(1, 28):
         agent.drop("up", 64, slot)
     time.sleep(1)
     agent.teleport(befor_position)
+
 
 def check_and_clear_agent_inventory() -> None:
     if not agent.get_item(27).id == "air":
@@ -126,13 +119,6 @@ def is_block_list_match_direction(direction: str, block_list: list) -> bool:
     """
     指定された方向において、ブロックのリストが所定のパターンにマッチするかを判定し、
     結果をブール値（True/False）で返却します。
-
-    Parameters:
-        direction (str): チェック対象の方向（例: 'north', 'south', 'east', 'west'）。
-        block_list (list): 判定対象となるブロック名称のリスト。
-
-    Returns:
-        bool: ブロックリストが指定方向のパターンにマッチする場合は True、そうでない場合は False。
     """
     # ここに判定ロジックを実装
     for block in block_list:
@@ -146,13 +132,6 @@ def get_agent_storage_socket_index(items: List[str]) -> int:
     """
     指定したアイテムがエージェントストレージのどのソケットに格納されているか確認し、
     ソケット番号を返却します。
-    
-    Parameters:
-        items (str): 検索対象のアイテム名称。
-    
-    Returns:
-        int: アイテムが格納されているソケット番号。該当するソケットがない場合は、例外を発生させるか
-             特定の値（例: -1）を返却する設計とします。
     """
 
     for item_name in items:
@@ -178,9 +157,6 @@ def is_mining_position() -> bool:
     """
     指定された位置情報がマイニング対象のポジションであるかどうかを判定し、
     結果をブール値（True/False）で返却します。
-
-    Returns:
-        bool: 指定位置がマイニング対象である場合は True、そうでない場合は False。
     """
     position_x = agent.position.x
     position_y = agent.position.y
@@ -213,7 +189,6 @@ def explore_and_mine_resources(block_list: List[str]):
 
             agent.move(get_opposite_direction(direction))
             
-
 def mining(count: int) -> None:
     """
     資源を収集しながら掘り進める
@@ -222,7 +197,7 @@ def mining(count: int) -> None:
         agent.say(f"mining: {step}/{count}")
         if agent.detect("forward"):
             agent.destroy("forward")
-            agent.collect()
+            # agent.collect()
 
         explore_and_mine_resources(underground_resource_list)
         agent.move("forward")
@@ -248,7 +223,7 @@ def branch_mining() -> bool:
         agent.say(f"branch_mining: {step}/{length} {agent.position}")
         if agent.detect("forward"):
             agent.destroy("forward")
-            agent.collect()
+            # agent.collect()
         agent.move("forward")
 
         if is_mining_position() == True:
@@ -261,6 +236,7 @@ def branch_mining() -> bool:
                 agent.turn("left")
                 mining(500)
                 agent.turn("right")
+
 
 @on_event("PlayerMessage")
 def process_chat_command(message, sender, receiver, message_type):
@@ -288,3 +264,7 @@ def process_chat_command(message, sender, receiver, message_type):
             agent.say(agent.inspect("forward"))
         elif command == "what_item":
             agent.say(agent.get_item(1))
+        elif command == "delivery":
+            agent_item_delivery()
+
+
