@@ -255,7 +255,7 @@ def branch_mining() -> bool:
             
             if agent.detect("left") == True:
                 agent.turn("left")
-                mining(500, step)
+                mining(500, step)å
                 agent.turn("right")
 
 
@@ -289,5 +289,3 @@ def process_chat_command(message, sender, receiver, message_type):
             agent_item_delivery()
         elif command == "where":
             show_agemt_location()
-
-
