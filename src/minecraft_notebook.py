@@ -43,8 +43,6 @@ def check_and_clear_agent_inventory() -> None:
     if not agent.get_item(27).id == "air":
         agent_item_delivery()
 
-check_and_clear_agent_inventory()
-
 
 def set_agent_azimuth(azimuth: int):
     """
@@ -123,8 +121,6 @@ def get_opposite_direction(direction: str) -> str:
         agent.say(f"入力の方向が正しくありません: {direction}")
         return ""
 
-agent.say(get_opposite_direction("forward"))
-
 
 def is_block_list_match_direction(direction: str, block_list: list) -> bool:
     """
@@ -189,12 +185,15 @@ def is_mining_position() -> bool:
     position_x = agent.position.x
     position_y = agent.position.y
 
-    if position_x % 8 == 0 and position_y % 8 == 0:
-        return True
-    elif (position_x + 2) % 8 == 0 and (position_y + 4) % 8 == 0:
-        return True
-    else:
-        return False
+    if position_y % 8 == 0:
+        if position_x % 4 == 0:
+            return True
+
+    elif position_y % 4 == 0:
+        if  position_x % 2 == 0:
+            return True
+
+    return False
 
 
 def explore_and_mine_resources(block_list: List[str]):
@@ -246,19 +245,19 @@ def branch_mining() -> bool:
         return False
 
     for step in range(length):
-        agent.say(f"branch_mining: {step}/{length}")
+        agent.say(f"branch_mining: {step}/{length} {agent.position}")
         if agent.detect("forward"):
             agent.destroy("forward")
             agent.collect()
         agent.move("forward")
 
-        if is_mining_position():
-            if agent.detect("right"):
+        if is_mining_position() == True:
+            if agent.detect("right") == True:
                 agent.turn("right")
                 mining(500)
                 agent.turn("left")
             
-            if agent.detect("left"):
+            if agent.detect("left") == True:
                 agent.turn("left")
                 mining(500)
                 agent.turn("right")
@@ -289,4 +288,3 @@ def process_chat_command(message, sender, receiver, message_type):
             agent.say(agent.inspect("forward"))
         elif command == "what_item":
             agent.say(agent.get_item(1))
-
