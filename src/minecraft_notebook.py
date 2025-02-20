@@ -11,7 +11,20 @@ underground_resource_list = ["*_ore", "ancient_debris"]
 # 液体ブロック
 liquid_block_list = ["water", "lava"]
 # 普通のブロックの名称
-normal_block_list = ["cobblestone", "granite", "andesite", "dirt", "deepslate", "blackstone", "stone"]
+normal_block_list = ["cobblestone", "cobbled_deepslate", "granite", "andesite", "dirt", "tuff", "deepslate", "blackstone", "stone"]
+
+
+def str_azimuth(azimuth: int) -> str:
+    if azimuth == -90:
+        return "E"
+    elif azimuth == 0:
+        return "S"
+    elif azimuth == 90:
+        return "W"
+    elif azimuth == -180:
+        return "N"
+    else:
+        return "unknown_azimuth"
 
 
 def show_agent_item_list():
@@ -20,15 +33,22 @@ def show_agent_item_list():
         item = agent.get_item(i)
         agent.say(f"{i} : {item.id} {item.stack_size}/{item.max_stack_size}")
 
+def show_agemt_location():
+    """エージェントの場所と周囲の状況を表示する"""
+    agent.say(f"Position : {agent.position}")
+    agent.say(f"Rotation : {str_azimuth(agent.rotation)}")
+    for direction in ["forward", "back", "left", "right", "up", "down"]:
+        agent.say(f"- {direction} : {agent.inspect(direction).id}")
+
 
 def agent_item_delivery() -> None:
     """エージェントのアイテムを回収場所にドロップする"""
     befor_position = agent.position
     agent.teleport(item_collection_location)
-    time.sleep(1)
+    time.sleep(1000)
     for slot in range(1, 28):
         agent.drop("up", 64, slot)
-    time.sleep(1)
+    time.sleep(1000)
     agent.teleport(befor_position)
 
 
@@ -189,21 +209,22 @@ def explore_and_mine_resources(block_list: List[str]):
 
             agent.move(get_opposite_direction(direction))
             
-def mining(count: int) -> None:
+def mining(depth: int, line_number: int = 0) -> None:
     """
     資源を収集しながら掘り進める
     """
-    for step in range(count):
-        agent.say(f"mining: {step}/{count}")
+    for step in range(depth):
+        agent.say(f"mining : {line_number} - {step}/{depth}")
         if agent.detect("forward"):
             agent.destroy("forward")
-            # agent.collect()
+            agent.collect()
 
         explore_and_mine_resources(underground_resource_list)
         agent.move("forward")
     
     for step in range(count):
         agent.move("back")
+    time.sleep(1000)
     agent_item_delivery()
     agent.say("mining: finish")
 
@@ -220,21 +241,21 @@ def branch_mining() -> bool:
         return False
 
     for step in range(length):
-        agent.say(f"branch_mining: {step}/{length} {agent.position}")
+        agent.say(f"branch_mining : {step}/{length} {agent.position}")
         if agent.detect("forward"):
             agent.destroy("forward")
-            # agent.collect()
+            agent.collect()
         agent.move("forward")
 
         if is_mining_position() == True:
             if agent.detect("right") == True:
                 agent.turn("right")
-                mining(500)
+                mining(500, step)
                 agent.turn("left")
             
             if agent.detect("left") == True:
                 agent.turn("left")
-                mining(500)
+                mining(500, step)
                 agent.turn("right")
 
 
@@ -254,7 +275,7 @@ def process_chat_command(message, sender, receiver, message_type):
         elif command == "come":
             # エージェントを自分の前に呼び出す
             agent_teleport_player()
-        elif command == "agent_teleport":
+        elif command == "warp":
             agent_teleport(chunked_messages[1], chunked_messages[2], chunked_messages[3])
         elif command == "branch_mining":
             branch_mining()
@@ -266,5 +287,7 @@ def process_chat_command(message, sender, receiver, message_type):
             agent.say(agent.get_item(1))
         elif command == "delivery":
             agent_item_delivery()
+        elif command == "where":
+            show_agemt_location()
 
 
