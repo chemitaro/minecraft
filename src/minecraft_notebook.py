@@ -215,8 +215,6 @@ def explore_and_mine_resources(block_list: List[str]):
             agent.move(get_opposite_direction(direction))
             
 
-
-
 def mining(count: int) -> None:
     """
     資源を収集しながら掘り進める
@@ -234,7 +232,7 @@ def mining(count: int) -> None:
         agent.move("back")
     agent_item_delivery()
     agent.say("mining: finish")
-    
+
 
 def branch_mining() -> bool:
     """
@@ -264,8 +262,6 @@ def branch_mining() -> bool:
                 agent.turn("left")
                 mining(500)
                 agent.turn("right")
-
-
 
 @on_event("PlayerMessage")
 def process_chat_command(message, sender, receiver, message_type):
