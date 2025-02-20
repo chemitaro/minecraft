@@ -200,7 +200,7 @@ def explore_and_mine_resources(block_list: List[str]):
     directions = ["up", "left", "down", "right", "back", "forward"]
     for direction in directions:
         if is_block_list_match_direction(direction, block_list):
-            agent.say(f"find: {agent.inspect(direction).id} at {agent.position}")
+            agent.say(f"- find : {agent.inspect(direction).id} at {agent.position}")
             agent.destroy(direction)
             agent.collect()
             agent.move(direction)
@@ -224,9 +224,10 @@ def mining(depth: int, line_number: int = 0) -> None:
     agent.say("return...")
     for step in range(depth):
         agent.move("back")
-        agent.say(f"Return : {step}/{depth}")
+        agent.say(f"Return : {line_number} - {step}/{depth}")
+    agent.say("Return : finish")
     agent_item_delivery()
-    agent.say("mining : finish")
+    agent.say("Mining : finish")
 
 
 def branch_mining() -> bool:
@@ -251,12 +252,12 @@ def branch_mining() -> bool:
             if agent.detect("right") == True:
                 agent.turn("right")
                 mining(500, f"{step}R")
-                agent.turn("left")
+                set_agent_azimuth(-90)
             
             if agent.detect("left") == True:
                 agent.turn("left")
                 mining(500, f"{step}L")
-                agent.turn("right")
+                set_agent_azimuth(-90)
 
 
 @on_event("PlayerMessage")
