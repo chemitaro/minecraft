@@ -3,7 +3,6 @@ from typing import List
 import minecraft
 import time
 
-
 # アイテムの回収場所の座標座標
 item_collection_location = [-156, 71, 1262]
 # 有益な地下資源の名称
@@ -44,11 +43,12 @@ def show_agemt_location():
 def agent_item_delivery() -> None:
     """エージェントのアイテムを回収場所にドロップする"""
     befor_position = agent.position
+    time.sleep(1)
     agent.teleport(item_collection_location)
-    time.sleep(1000)
+    time.sleep(1)
     for slot in range(1, 28):
         agent.drop("up", 64, slot)
-    time.sleep(1000)
+    time.sleep(1)
     agent.teleport(befor_position)
 
 
@@ -221,12 +221,12 @@ def mining(depth: int, line_number: int = 0) -> None:
 
         explore_and_mine_resources(underground_resource_list)
         agent.move("forward")
-    
-    for step in range(count):
+    agent.say("return...")
+    for step in range(depth):
         agent.move("back")
-    time.sleep(1000)
+        agent.say(f"Return : {step}/{depth}")
     agent_item_delivery()
-    agent.say("mining: finish")
+    agent.say("mining : finish")
 
 
 def branch_mining() -> bool:
@@ -250,12 +250,12 @@ def branch_mining() -> bool:
         if is_mining_position() == True:
             if agent.detect("right") == True:
                 agent.turn("right")
-                mining(500, step)
+                mining(500, f"{step}R")
                 agent.turn("left")
             
             if agent.detect("left") == True:
                 agent.turn("left")
-                mining(500, step)å
+                mining(500, f"{step}L")
                 agent.turn("right")
 
 
@@ -277,6 +277,7 @@ def process_chat_command(message, sender, receiver, message_type):
             agent_teleport_player()
         elif command == "warp":
             agent_teleport(chunked_messages[1], chunked_messages[2], chunked_messages[3])
+            show_agemt_location()
         elif command == "branch_mining":
             branch_mining()
         elif command == "item_list":
