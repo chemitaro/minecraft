@@ -6,7 +6,7 @@ import time
 # アイテムの回収場所の座標座標
 item_collection_location = [-156, 71, 1262]
 # 有益な地下資源の名称
-underground_resource_list = ["*_ore", "ancient_debris"]
+underground_resource_list = ["*_ore", "ancient_debris, *amethyst*"]
 # 液体ブロック
 liquid_block_list = ["water", "lava"]
 # 普通のブロックの名称
@@ -200,7 +200,7 @@ def explore_and_mine_resources(block_list: List[str]):
     directions = ["up", "left", "down", "right", "back", "forward"]
     for direction in directions:
         if is_block_list_match_direction(direction, block_list):
-            agent.say(f"- find : {agent.inspect(direction).id} at {agent.position}")
+            agent.say(f" -Find : {agent.inspect(direction).id} at {agent.position}")
             agent.destroy(direction)
             agent.collect()
             agent.move(direction)
@@ -214,14 +214,14 @@ def mining(depth: int, line_number: int = 0) -> None:
     資源を収集しながら掘り進める
     """
     for step in range(depth):
-        agent.say(f"mining : {line_number} - {step}/{depth}")
+        agent.say(f"Mining : {line_number} - {step}/{depth}")
         if agent.detect("forward"):
             agent.destroy("forward")
             agent.collect()
 
         explore_and_mine_resources(underground_resource_list)
         agent.move("forward")
-    agent.say("return...")
+    agent.say("Return...")
     for step in range(depth):
         agent.move("back")
         agent.say(f"Return : {line_number} - {step}/{depth}")
@@ -242,7 +242,7 @@ def branch_mining() -> bool:
         return False
 
     for step in range(length):
-        agent.say(f"branch_mining : {step}/{length} {agent.position}")
+        agent.say(f"Branch_mining : {step}/{length} {agent.position}")
         if agent.detect("forward"):
             agent.destroy("forward")
             agent.collect()
