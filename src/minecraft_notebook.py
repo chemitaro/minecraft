@@ -42,7 +42,7 @@ def agent_item_delivery() -> None:
     for collection_position in [item_collection_location, nether_item_collection_location, player.position]:
         agent.teleport(collection_position)
         time.sleep(0.5)
-        if agent.inspect("down").id == "hopper":    
+        if agent.inspect("down").id == "hopper":
             agent.say(f"teleport : {collection_position}")
             break
     time.sleep(1)
