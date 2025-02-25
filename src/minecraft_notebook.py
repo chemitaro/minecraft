@@ -6,9 +6,9 @@ import random
 import re
 
 # アイテムの回収場所の座標座標
-item_collection_location = [-156, 71, 1262]
-nether_item_collection_location = [-15, 86, 157]
-ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrac|kwater|lava|flowing_lava|dirt|baslate|tuff|granite|andesite|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
+item_collection_location = [-156, 73, 1262]
+nether_item_collection_location = [-11, 88, 160]
+ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrack|kwater|lava|flowing_lava|dirt|baslate|tuff|granite|andesite|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
 
 def str_azimuth(azimuth: int) -> str:
     if azimuth == -90:
@@ -42,7 +42,7 @@ def agent_item_delivery() -> None:
     for collection_position in [item_collection_location, nether_item_collection_location, player.position]:
         agent.teleport(collection_position)
         time.sleep(0.5)
-        if agent.inspect("down").id == "hopper":
+        if agent.inspect("down").id == "hopper":    
             agent.say(f"teleport : {collection_position}")
             break
     time.sleep(1)
