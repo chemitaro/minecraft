@@ -138,17 +138,15 @@ def agent_put_item(direction: str, item_names: List[str]) -> None:
 
 def is_mining_position() -> bool:
     """指定された位置情報がマイニング対象のポジションであるかどうかを判定し、結果をブール値（True/False）で返却します。"""
-    position_x = agent.position.x
-    position_y = agent.position.y
+    position_x = int(agent.position.x)
+    position_y = int(agent.position.y)
 
     if position_y % 8 == 0:
         if position_x % 4 == 0:
             return True
-
     elif position_y % 4 == 0:
-        if  (position_x + 2) % 4 == 0:
+        if (position_x + 2) % 4 == 0:
             return True
-
     return False
 
 def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = True):
@@ -168,7 +166,7 @@ def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = Tr
 def mining(depth: int, line_number: str = "none") -> None:
     """資源を収集しながら掘り進める"""
     start_position = agent.position
-    for step in range(depth):
+    for step in range(1, depth):
         agent.say(f"Mining : {line_number} - {step}/{depth}")
         explore_and_mine_resources(ignore_block_name_pattern, False)
         if agent.detect("forward"):
@@ -181,24 +179,21 @@ def mining(depth: int, line_number: str = "none") -> None:
 def branch_mining() -> bool:
     """ブランチマイニングを実行する"""
     length = 1000
-    # 掘削方向の西側を向く
-    set_agent_azimuth(-90)
+    set_agent_azimuth(-90)  # 掘削方向の西側を向く
     if not agent.position.y % 4 == 0:
         agent.say("高さが間違っています")
         return False
-
-    for step in range(length):
-        agent.say(f"Branch_mining : {step}/{length} {agent.position}")
+    for step in range(1, length):
         if agent.detect("forward"):
             agent.destroy("forward")
         agent.move("forward")
+        agent.say(f"Branch_mining : {step}/{length} {agent.position}")
         if is_mining_position() == True:
             if agent.detect("right") == True:
                 agent.turn("right")
                 mining(500, f"{step}R")
                 agent_item_delivery()
                 set_agent_azimuth(-90)
-            
             if agent.detect("left") == True:
                 agent.turn("left")
                 mining(500, f"{step}L")
