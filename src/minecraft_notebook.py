@@ -7,7 +7,8 @@ import re
 
 # アイテムの回収場所の座標座標
 item_collection_location = [-156, 71, 1262]
-ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|bedrock|dirt|baslate|tuff|granite|andesite|water|lava|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud)$')
+nether_item_collection_location = [-15, 86, 157]
+ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrac|kwater|lava|flowing_lava|dirt|baslate|tuff|granite|andesite|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
 
 def str_azimuth(azimuth: int) -> str:
     if azimuth == -90:
@@ -38,14 +39,21 @@ def agent_item_delivery() -> None:
     """エージェントのアイテムを回収場所にドロップする"""
     befor_position = agent.position
     time.sleep(1)
-    agent.teleport(item_collection_location)
+    for collection_position in [item_collection_location, nether_item_collection_location, player.position]:
+        agent.teleport(collection_position)
+        time.sleep(0.5)
+        if agent.inspect("down").id == "hopper":
+            agent.say(f"teleport : {collection_position}")
+            break
     time.sleep(1)
     for slot in range(1, 28):
         direction = random.choice(["forward", "back", "left", "right"])
+        agent.say(f"- drop : {agent.get_item(slot).id}")
         agent.drop(direction, 64, slot)
         time.sleep(0.3)
     time.sleep(1)
     agent.teleport(befor_position)
+    agent.say(f"return : {befor_position}")
 
 def check_and_clear_agent_inventory() -> None:
     if not agent.get_item(27).id == "air":
@@ -121,9 +129,7 @@ def get_agent_storage_socket_index(items: List[str]) -> int:
     return -1
 
 def agent_put_item(direction: str, item_names: List[str]) -> None:
-    """
-    エージェントが指定したアイテムを設置する
-    """
+    """エージェントが指定したアイテムを設置する"""
     socket_index = get_agent_storage_socket_index(item_names)
     if socket_index < 1:
         agent.say(f"{item_names}を持っていません")
@@ -131,10 +137,7 @@ def agent_put_item(direction: str, item_names: List[str]) -> None:
     agent.place(direction, socket_index)
 
 def is_mining_position() -> bool:
-    """
-    指定された位置情報がマイニング対象のポジションであるかどうかを判定し、
-    結果をブール値（True/False）で返却します。
-    """
+    """指定された位置情報がマイニング対象のポジションであるかどうかを判定し、結果をブール値（True/False）で返却します。"""
     position_x = agent.position.x
     position_y = agent.position.y
 
@@ -150,7 +153,7 @@ def is_mining_position() -> bool:
 
 def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = True):
     """プレイヤーが探索しながら資源を検出し、自動で採掘する処理を実行する関数。"""
-    directions = ["up", "left", "down", "right", "back", "forward"]
+    directions = ["back", "up", "down", "left", "right", "forward"]
     for direction in directions:
         if is_block_list_match_direction(direction, block_name_pattern) == mehtod:
             agent.say(f" -Find : {agent.inspect(direction).id} at {agent.position}")
@@ -162,28 +165,21 @@ def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = Tr
 
             agent.move(get_opposite_direction(direction))
             
-def mining(depth: int, line_number: int = 0) -> None:
+def mining(depth: int, line_number: str = "none") -> None:
     """資源を収集しながら掘り進める"""
+    start_position = agent.position
     for step in range(depth):
         agent.say(f"Mining : {line_number} - {step}/{depth}")
+        explore_and_mine_resources(ignore_block_name_pattern, False)
         if agent.detect("forward"):
             agent.destroy("forward")
-            agent.collect()
-
-        explore_and_mine_resources(ignore_block_name_pattern, False)
         agent.move("forward")
     agent.say("Return...")
-    for step in range(depth):
-        agent.move("back")
-        agent.say(f"Return : {line_number} - {step}/{depth}")
-    agent.say("Return : finish")
-    agent_item_delivery()
+    agent.teleport(start_position)
     agent.say("Mining : finish")
 
 def branch_mining() -> bool:
-    """
-    ブランチマイニングを実行する
-    """
+    """ブランチマイニングを実行する"""
     length = 1000
     # 掘削方向の西側を向く
     set_agent_azimuth(-90)
@@ -201,11 +197,13 @@ def branch_mining() -> bool:
             if agent.detect("right") == True:
                 agent.turn("right")
                 mining(500, f"{step}R")
+                agent_item_delivery()
                 set_agent_azimuth(-90)
             
             if agent.detect("left") == True:
                 agent.turn("left")
                 mining(500, f"{step}L")
+                agent_item_delivery()
                 set_agent_azimuth(-90)
 
 @on_event("PlayerMessage")
@@ -229,6 +227,8 @@ def process_chat_command(message, sender, receiver, message_type):
             show_agemt_location()
         elif command == "branch_mining":
             branch_mining()
+        elif command == "mining":
+            mining(int(chunked_messages[1]), "manual")
         elif command == "item_list":
             show_agent_item_list()
         elif command == "what_block":
