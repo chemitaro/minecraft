@@ -146,7 +146,7 @@ def is_mining_position() -> bool:
             return True
 
     elif position_y % 4 == 0:
-        if  position_x % 2 == 0:
+        if  (position_x + 2) % 4 == 0:
             return True
 
     return False
@@ -192,7 +192,6 @@ def branch_mining() -> bool:
         if agent.detect("forward"):
             agent.destroy("forward")
         agent.move("forward")
-
         if is_mining_position() == True:
             if agent.detect("right") == True:
                 agent.turn("right")
