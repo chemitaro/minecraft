@@ -97,7 +97,6 @@ def agent_turn_away_from_player() -> None:
             azimuth = -180
         else:
             azimuth = 0
-    
     set_agent_azimuth(azimuth)
 
 def agent_teleport_player():
@@ -111,10 +110,7 @@ def agent_teleport(x, y, z):
 
 def is_block_list_match_direction(direction: str, block_name_pattern: re.Pattern) -> bool:
     """指定された方向において、ブロックのリストが所定のパターンにマッチするかを判定し、結果をブール値（True/False）で返却します。"""
-    if block_name_pattern.match(agent.inspect(direction).id) is not None:
-        return True
-    else:
-        return False
+    return bool(block_name_pattern.match(agent.inspect(direction).id))
 
 def get_agent_storage_socket_index(items: List[str]) -> int:
     """指定したアイテムがエージェントストレージのどのソケットに格納されているか確認し、ソケット番号を返却します。"""
