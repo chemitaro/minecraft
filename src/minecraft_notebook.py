@@ -5,10 +5,11 @@ import time
 import random
 import re
 
-# アイテムの回収場所の座標座標
-item_collection_location = [-156, 73, 1262]
-nether_item_collection_location = [-11, 88, 160]
-ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrack|kwater|lava|flowing_lava|dirt|baslate|tuff|granite|andesite|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
+item_collection_location = [-156, 73, 1262]  # アイテムの回収場所の座標座標
+nether_item_collection_location = [-11, 88, 160]  # ネザーのアイテムの回収場所の座標座標
+ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrack|kwater|lava|flowing_lava|fire|dirt|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
+player_mention = "@yutaf "
+agent.say(player_mention + "run script")
 
 def str_azimuth(azimuth: int) -> str:
     if azimuth == -90:
@@ -35,6 +36,32 @@ def show_agemt_location():
     for direction in ["forward", "back", "left", "right", "up", "down"]:
         agent.say(f"- {direction} : {agent.inspect(direction).id}")
 
+def safe_teleport(position: List):
+    """多段階で移動する安全なテレポート"""
+    step_length = 50
+    start_x = agent.position.x
+    start_z = agent.position.z
+    distance_x = position[0] - start_x
+    move_sign_x = 1 if distance_x > 0 else -1
+    distance_z = position[2] - start_z
+    move_sign_z = 1 if distance_z > 0 else -1
+    for step in range(1, abs(int(distance_x/step_length))+1):
+        agent.teleport([start_x + step*step_length*move_sign_x, agent.position.y, agent.position.z])
+        agent.say(f"teleport_x{step} - {agent.position}")
+    for step in range(1, abs(int(distance_z/step_length))+1):
+        agent.teleport([agent.position.x, agent.position.y, start_z + step*step_length*move_sign_z])
+        agent.say(f"teleport_z{step} - {agent.position}")
+    agent.teleport(position)
+    agent.say(f"safe_teleport: finish - {agent.position}")
+
+def agent_turn(direction: str, count: int = 1):
+    for i in range(count):
+        agent.turn(direction)
+
+def agent_move(direction: str, count: int = 1):
+    for i in range(count):
+        agent.move(direction)
+
 def agent_item_delivery() -> None:
     """エージェントのアイテムを回収場所にドロップする"""
     befor_position = agent.position
@@ -60,12 +87,13 @@ def check_and_clear_agent_inventory() -> None:
         agent_item_delivery()
 
 
-def set_agent_azimuth(azimuth: int):
+def set_agent_azimuth(azimuth: int) -> bool:
     """エージェントの向く方角を変える"""
     for i in range(4):
         if agent.rotation == azimuth:
-            break
+            return True
         agent.turn("right")
+    return False
 
 def agent_turn_away_from_player() -> None:
     """エージェントがプレイヤーに背を向ける動作を実行します。"""
@@ -128,13 +156,25 @@ def get_agent_storage_socket_index(items: List[str]) -> int:
                 return socket_index
     return -1
 
-def agent_put_item(direction: str, item_names: List[str]) -> None:
+def agent_put_item(direction: str, item_names: List[str]) -> bool:
     """エージェントが指定したアイテムを設置する"""
     socket_index = get_agent_storage_socket_index(item_names)
     if socket_index < 1:
         agent.say(f"{item_names}を持っていません")
-        return None
+        return False
     agent.place(direction, socket_index)
+    return True
+
+def generate_flint():
+    """火打石を量産する"""
+    running = True
+    while running:
+        if agent_put_item("forward", ["gravel"]) is False:
+            running = False
+        agent.destroy("forward")
+        agent.collect()
+    agent.say("generate_flint : finish")
+
 
 def is_mining_position() -> bool:
     """指定された位置情報がマイニング対象のポジションであるかどうかを判定し、結果をブール値（True/False）で返却します。"""
@@ -151,10 +191,10 @@ def is_mining_position() -> bool:
 
 def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = True):
     """プレイヤーが探索しながら資源を検出し、自動で採掘する処理を実行する関数。"""
-    directions = ["back", "up", "down", "left", "right", "forward"]
+    directions = ["down", "up", "left", "right", "back", "forward"]
     for direction in directions:
         if is_block_list_match_direction(direction, block_name_pattern) == mehtod:
-            agent.say(f" -Find : {agent.inspect(direction).id} at {agent.position}")
+            agent.say(f" -find : {agent.inspect(direction).id} at {agent.position}")
             agent.destroy(direction)
             agent.collect()
             agent.move(direction)
@@ -162,15 +202,16 @@ def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = Tr
             explore_and_mine_resources(block_name_pattern, mehtod)
 
             agent.move(get_opposite_direction(direction))
+            agent.say(f" -lose : {agent.position}")
             
 def mining(depth: int, line_number: str = "none") -> None:
     """資源を収集しながら掘り進める"""
     start_position = agent.position
     for step in range(1, depth):
         agent.say(f"Mining : {line_number} - {step}/{depth}")
-        explore_and_mine_resources(ignore_block_name_pattern, False)
         if agent.detect("forward"):
             agent.destroy("forward")
+            explore_and_mine_resources(ignore_block_name_pattern, False)
         agent.move("forward")
     agent.say("Return...")
     agent.teleport(start_position)
@@ -189,40 +230,45 @@ def branch_mining() -> bool:
         agent.move("forward")
         agent.say(f"Branch_mining : {step}/{length} {agent.position}")
         if is_mining_position() == True:
+            show_agemt_location()
             if agent.detect("right") == True:
                 agent.turn("right")
                 mining(500, f"{step}R")
                 agent_item_delivery()
-                set_agent_azimuth(-90)
+                time.sleep(3)
+                agent.turn("left")
             if agent.detect("left") == True:
                 agent.turn("left")
                 mining(500, f"{step}L")
                 agent_item_delivery()
-                set_agent_azimuth(-90)
+                time.sleep(3)
+                agent.turn("right")
 
 @on_event("PlayerMessage")
 def process_chat_command(message, sender, receiver, message_type):
     # Play a sound when someone said something
 
     if sender == "yutaf" and message_type == "chat":
-        # block = agent.inspect("forward")
-        # agent.say(block.id)
         chunked_messages = message.split()
         command = chunked_messages[0]
 
         if command == "trial":
             # ここに実行する実験的な処理を記述する
+            safe_teleport([66, 12, 0])
+            show_agemt_location()
             agent.say("troal fin")
-        elif command == "come":
-            # エージェントを自分の前に呼び出す
+        elif command == "come":  # エージェントを呼び出す
             agent_teleport_player()
         elif command == "warp":
             agent_teleport(chunked_messages[1], chunked_messages[2], chunked_messages[3])
-            show_agemt_location()
         elif command == "branch_mining":
             branch_mining()
         elif command == "mining":
             mining(int(chunked_messages[1]), "manual")
+        elif command == "turn":
+            agent_turn(chunked_messages[1], 1)
+        elif command == "move":
+            agent_move(chunked_messages[1], int(chunked_messages[2]))
         elif command == "item_list":
             show_agent_item_list()
         elif command == "what_block":
@@ -233,3 +279,5 @@ def process_chat_command(message, sender, receiver, message_type):
             agent_item_delivery()
         elif command == "where":
             show_agemt_location()
+        elif command == "flint":
+            generate_flint()
