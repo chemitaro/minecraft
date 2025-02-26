@@ -27,13 +27,9 @@ def show_agemt_location():
 
 def safe_teleport(position: List):
     """多段階で移動する安全なテレポート"""
-    step_length = 25
-    start_x = agent.position.x
-    start_z = agent.position.z
-    distance_x = position[0] - start_x
-    move_sign_x = 1 if distance_x > 0 else -1
-    distance_z = position[2] - start_z
-    move_sign_z = 1 if distance_z > 0 else -1
+    step_length, start_x, start_z = 25, agent.position.x, agent.position.z
+    distance_x, distance_z = position[0] - start_x, position[2] - start_z
+    move_sign_x, move_sign_z = 1 if distance_x > 0 else -1, 1 if distance_z > 0 else -1
     for step in range(1, abs(int(distance_x/step_length))+1):
         agent.teleport([start_x + step*step_length*move_sign_x, agent.position.y, agent.position.z])
         agent.say(f"teleport_x{step} - {agent.position}")
@@ -84,19 +80,9 @@ def set_agent_azimuth(azimuth: int) -> bool:
 
 def agent_turn_away_from_player() -> None:
     """エージェントがプレイヤーに背を向ける動作を実行します。"""
-    agent_position = agent.position
-    player_positoon = player.position
-    azimuth = None
-    if abs(abs(agent_position.x) - abs(player_positoon.x)) > abs(abs(agent_position.z) - abs(player_positoon.z)):
-        if agent_position.x < player_positoon.x:
-            azimuth = 90
-        else:
-            azimuth = -90
-    else:
-        if agent_position.z < player_positoon.z:
-            azimuth = -180
-        else:
-            azimuth = 0
+    agent_pos, player_pos = agent.position, player.position
+    azimuth = 90 if abs(agent_pos.x - player_pos.x) > abs(agent_pos.z - player_pos.z) else (-180 if agent_pos.z < player_pos.z else 0)
+    azimuth *= -1 if agent_pos.x > player_pos.x else 1
     set_agent_azimuth(azimuth)
 
 def agent_teleport_player():
@@ -139,7 +125,6 @@ def generate_flint():
         agent.destroy("forward")
         agent.collect()
     agent.say("generate_flint : finish")
-
 
 def is_mining_position() -> bool:
     """指定された位置情報がマイニング対象のポジションであるかどうかを判定し、結果をブール値（True/False）で返却します。"""
