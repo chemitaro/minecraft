@@ -7,7 +7,7 @@ import re
 
 item_collection_location = [-156, 73, 1262]  # アイテムの回収場所の座標座標
 nether_item_collection_location = [-11, 88, 160]  # ネザーのアイテムの回収場所の座標座標
-ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrack|kwater|lava|flowing_lava|fire|dirt|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
+ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrack|water|flowing_water|lava|flowing_lava|fire|dirt|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
 player_mention = "@yutaf "
 azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
 opposite_direction_dict = {"forward": "back", "back": "forward", "up": "down", "down": "up", "left": "right", "right": "left"}
@@ -132,7 +132,7 @@ def is_mining_position() -> bool:
 
 def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = True):
     """プレイヤーが探索しながら資源を検出し、自動で採掘する処理を実行する関数。"""
-    directions = ["down", "up", "left", "right", "back", "forward"]
+    directions = ["up", "left", "right", "back", "forward", "down"]
     for direction in directions:
         if is_block_list_match_direction(direction, block_name_pattern) == mehtod:
             agent.say(f" -find : {agent.inspect(direction).id} at {agent.position}")
