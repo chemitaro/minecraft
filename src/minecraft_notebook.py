@@ -66,7 +66,7 @@ def agent_turn(direction: str, count: int = 1):
 
 def agent_move(direction: str, count: int = 1, is_destroy: bool = False):
     for i in range(count):
-        if is_destroy and agent.detect(direction):
+        while is_destroy and agent.detect(direction):
             agent.destroy(direction)
         agent.move(direction)
 
@@ -112,7 +112,7 @@ def get_agent_storage_socket_index(items: List[str]) -> int:
                 return socket_index
     return -1
 
-def agent_put_item(direction: str, item_names: List[str]) -> bool:
+def agent_use_item(direction: str, item_names: List[str]) -> bool:
     """エージェントが指定したアイテムを設置する"""
     socket_index = get_agent_storage_socket_index(item_names)
     if socket_index < 1:
@@ -121,11 +121,45 @@ def agent_put_item(direction: str, item_names: List[str]) -> bool:
     agent.place(direction, socket_index)
     return True
 
+def agent_put_nomel_block(direction: str) -> bool:
+    if agent.detect(direction):
+        return False
+    return agent_use_item(direction, ["cobblestone", "cobbled_deepslate", "dirt", "baslate", "tuff", "granite", "andesite", "deepslate", "stone", "netherrack"])
+
+def build_space(width: int, height: int, depth: int, *, f: bool = False, b: bool = False, l: bool = False, r: bool = False, u: bool = False, d: bool = False):
+    agent_move("up", height-1, True)  # 開始ポジションに移動（左上）
+    for d in range(depth):
+        for w in range(width):
+            if u:
+                agent_put_nomel_block("up")
+            for h in range(height):
+                if l and w == 0:
+                    agent_put_nomel_block("left")
+                if r and w == (width-1):
+                    agent_put_nomel_block("right")
+                if b and d == 0:
+                    agent_put_nomel_block("back")
+                if f and d == depth-1:
+                    agent_put_nomel_block("forward")
+                if h < height-1:
+                    agent_move("down", 1, True)
+                    agent.collect()
+            if d:
+                agent_put_nomel_block("down")
+            agent_move("up", height-1, True)
+            if w < width-1:
+                agent_move("right", 1, True)
+        agent_move("left", width-1, True)
+        if d < depth-1:
+            check_and_clear_agent_inventory()
+            agent_move("forward", 1, True)
+    agent_move("down", height-1, True)
+
 def generate_flint():
     """火打石を量産する"""
     running = True
     while running:
-        if agent_put_item("forward", ["gravel"]) is False:
+        if agent_use_item("forward", ["gravel"]) is False:
             running = False
         agent.destroy("forward")
         agent.collect()
@@ -197,7 +231,7 @@ def process_chat_command(message, sender, receiver, message_type):
         command = chunked_messages[0]
 
         if command == "trial":  # ここに実行する実験的な処理を記述する
-            agent_move("f", 10, True)
+            build_space(12, 8, 50, l=True, r=True, u=True, d=True, f=True)
             agent.say("troal fin")
         elif command == "switch":
             switch_world_type()
