@@ -8,9 +8,7 @@ from enum import Enum
 from dataclasses import dataclass
 
 ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrack|water|flowing_water|lava|flowing_lava|fire|dirt|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
-player_mention = "@yutaf "
-azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
-opposite_direction_dict = {"forward": "back", "back": "forward", "up": "down", "down": "up", "left": "right", "right": "left"}
+player_mention, azimuth_dict, opposite_direction_dict = "@yutaf ", {-90: "E", 0: "S", 90: "W", -180: "N"}, {"forward": "back", "back": "forward", "up": "down", "down": "up", "left": "right", "right": "left"}
 
 @dataclass
 class WorldType:
