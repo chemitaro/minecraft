@@ -64,8 +64,10 @@ def agent_turn(direction: str, count: int = 1):
     for i in range(count):
         agent.turn(direction)
 
-def agent_move(direction: str, count: int = 1):
+def agent_move(direction: str, count: int = 1, is_destroy: bool = False):
     for i in range(count):
+        if is_destroy and agent.detect(direction):
+            agent.destroy(direction)
         agent.move(direction)
 
 def agent_item_delivery() -> None:
@@ -93,21 +95,9 @@ def set_agent_azimuth(azimuth: int) -> bool:
         agent.turn("right")
     return False
 
-def agent_turn_away_from_player() -> None:
-    """エージェントがプレイヤーに背を向ける動作を実行します。"""
-    agent_pos, player_pos = agent.position, player.position
-    azimuth = 90 if abs(agent_pos.x - player_pos.x) > abs(agent_pos.z - player_pos.z) else (-180 if agent_pos.z < player_pos.z else 0)
-    azimuth *= -1 if agent_pos.x > player_pos.x else 1
-    set_agent_azimuth(azimuth)
-
 def agent_teleport_player():
     """エージェントがプレイヤーの前にテレポートする"""
-    agent.teleport(["^0", "^0", "^1"])
-    agent_turn_away_from_player()
-
-def agent_teleport(x, y, z):
-    """エージェントを指定した座標にテレポートさせる"""
-    safe_teleport([x, y, z])
+    agent.teleport(["~0", "~0", "~0"])
 
 def is_block_list_match_direction(direction: str, block_name_pattern: re.Pattern) -> bool:
     """指定された方向において、ブロックのリストが所定のパターンにマッチするかを判定し、結果をブール値（True/False）で返却します。"""
@@ -207,14 +197,14 @@ def process_chat_command(message, sender, receiver, message_type):
         command = chunked_messages[0]
 
         if command == "trial":  # ここに実行する実験的な処理を記述する
-            switch_world_type()
+            agent_move("f", 10, True)
             agent.say("troal fin")
         elif command == "switch":
             switch_world_type()
         elif command == "come":  # エージェントを呼び出す
             agent_teleport_player()
         elif command == "warp":
-            agent_teleport(int(chunked_messages[1]), int(chunked_messages[2]), int(chunked_messages[3]))
+            safe_teleport([int(chunked_messages[1]), int(chunked_messages[2]), int(chunked_messages[3])])
         elif command == "branch_mining":
             branch_mining()
         elif command == "mining":
