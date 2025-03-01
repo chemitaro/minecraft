@@ -7,8 +7,6 @@ import re
 from enum import Enum
 from dataclasses import dataclass
 
-item_collection_location = [-156, 73, 1262]  # アイテムの回収場所の座標座標
-nether_item_collection_location = [-11, 88, 160]  # ネザーのアイテムの回収場所の座標座標
 ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrack|water|flowing_water|lava|flowing_lava|fire|dirt|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
 player_mention = "@yutaf "
 azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
@@ -21,7 +19,7 @@ class WorldType:
     teleport_step_length: int
 
 class WorldEnum(Enum):
-    OVER_WARLD = WorldType(name="over_warld", collection_location=[-156, 73, 1262], teleport_step_length= 500)
+    OVER_WARLD = WorldType(name="over_warld", collection_location=[-156, 76, 1263], teleport_step_length= 500)
     NETHER = WorldType(name="nether", collection_location=[-11, 88, 160], teleport_step_length= 25)
     THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], teleport_step_length= 25)
 
@@ -52,7 +50,7 @@ def show_agemt_location():
 
 def safe_teleport(position: List):
     """多段階で移動する安全なテレポート"""
-    step_length, start_x, start_z = current_warld_enum.value.collection_location, agent.position.x, agent.position.z
+    step_length, start_x, start_z = current_warld_enum.value.teleport_step_length, agent.position.x, agent.position.z
     distance_x, distance_z = position[0] - start_x, position[2] - start_z
     move_sign_x, move_sign_z = 1 if distance_x > 0 else -1, 1 if distance_z > 0 else -1
     for step in range(1, abs(int(distance_x/step_length))+1):
@@ -75,14 +73,8 @@ def agent_move(direction: str, count: int = 1):
 def agent_item_delivery() -> None:
     """エージェントのアイテムを回収場所にドロップする"""
     befor_position = agent.position
-    time.sleep(1)
-    for collection_position in [item_collection_location, nether_item_collection_location, player.position]:
-        agent.teleport(collection_position)
-        time.sleep(0.5)
-        if agent.inspect("down").id == "hopper":
-            agent.say(f"teleport : {collection_position}")
-            break
-    time.sleep(1)
+    safe_teleport(current_warld_enum.value.collection_location)
+    time.sleep(0.5)
     for slot in range(1, 28):
         direction = random.choice(["forward", "back", "left", "right"])
         agent.say(f"- drop : {agent.get_item(slot).id}")
