@@ -27,7 +27,7 @@ class WorldEnum(Enum):
 
 current_warld_enum = WorldEnum.OVER_WARLD
 
-def switch_world_type() -> WorldEnum:
+def switch_world_type() -> WorldEnum:  # Worldの種類を変更する
     global current_warld_enum
     enum_members = list(WorldEnum)
     current_index = enum_members.index(current_warld_enum)
@@ -44,6 +44,7 @@ def show_agent_item_list():
 
 def show_agemt_location():
     """エージェントの場所と周囲の状況を表示する"""
+    agent.say(f"World : {current_warld_enum.value.name}")
     agent.say(f"Position : {agent.position}")
     agent.say(f"Rotation : {azimuth_dict[agent.rotation]}")
     for direction in ["forward", "back", "left", "right", "up", "down"]:
@@ -51,7 +52,7 @@ def show_agemt_location():
 
 def safe_teleport(position: List):
     """多段階で移動する安全なテレポート"""
-    step_length, start_x, start_z = 25, agent.position.x, agent.position.z
+    step_length, start_x, start_z = current_warld_enum.value.collection_location, agent.position.x, agent.position.z
     distance_x, distance_z = position[0] - start_x, position[2] - start_z
     move_sign_x, move_sign_z = 1 if distance_x > 0 else -1, 1 if distance_z > 0 else -1
     for step in range(1, abs(int(distance_x/step_length))+1):
@@ -218,6 +219,8 @@ def process_chat_command(message, sender, receiver, message_type):
         if command == "trial":  # ここに実行する実験的な処理を記述する
             switch_world_type()
             agent.say("troal fin")
+        elif command == "switch":
+            switch_world_type()
         elif command == "come":  # エージェントを呼び出す
             agent_teleport_player()
         elif command == "warp":
