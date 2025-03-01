@@ -4,6 +4,8 @@ import minecraft
 import time
 import random
 import re
+from enum import Enum
+from dataclasses import dataclass
 
 item_collection_location = [-156, 73, 1262]  # アイテムの回収場所の座標座標
 nether_item_collection_location = [-11, 88, 160]  # ネザーのアイテムの回収場所の座標座標
@@ -11,6 +13,28 @@ ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrack|wate
 player_mention = "@yutaf "
 azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
 opposite_direction_dict = {"forward": "back", "back": "forward", "up": "down", "down": "up", "left": "right", "right": "left"}
+
+@dataclass
+class WorldType:
+    name: str
+    collection_location: List[int]
+    teleport_step_length: int
+
+class WorldEnum(Enum):
+    OVER_WARLD = WorldType(name="over_warld", collection_location=[-156, 73, 1262], teleport_step_length= 500)
+    NETHER = WorldType(name="nether", collection_location=[-11, 88, 160], teleport_step_length= 25)
+    THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], teleport_step_length= 25)
+
+current_warld_enum = WorldEnum.OVER_WARLD
+
+def switch_world_type() -> WorldEnum:
+    global current_warld_enum
+    enum_members = list(WorldEnum)
+    current_index = enum_members.index(current_warld_enum)
+    next_index = (current_index + 1) % len(enum_members)
+    current_warld_enum = enum_members[next_index]
+    agent.say(f"switched : {current_warld_enum.value.name}")
+    return current_warld_enum
 
 def show_agent_item_list():
     """エージェントのアイテム一覧を表示"""
@@ -192,6 +216,7 @@ def process_chat_command(message, sender, receiver, message_type):
         command = chunked_messages[0]
 
         if command == "trial":  # ここに実行する実験的な処理を記述する
+            switch_world_type()
             agent.say("troal fin")
         elif command == "come":  # エージェントを呼び出す
             agent_teleport_player()
