@@ -17,7 +17,7 @@ class WorldType:
     teleport_step_length: int
 
 class WorldEnum(Enum):
-    OVER_WARLD = WorldType(name="over_warld", collection_location=[-156, 76, 1263], teleport_step_length= 500)
+    OVER_WARLD = WorldType(name="over_warld", collection_location=[-156, 76, 1263], teleport_step_length= 176)
     NETHER = WorldType(name="nether", collection_location=[-11, 88, 160], teleport_step_length= 25)
     THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], teleport_step_length= 25)
 
@@ -121,31 +121,31 @@ def agent_use_item(direction: str, item_names: List[str]) -> bool:
     agent.place(direction, socket_index)
     return True
 
-def agent_put_nomel_block(direction: str) -> bool:
+def agent_put_block(direction: str, block_names: List[str] = ["cobblestone", "cobbled_deepslate", "dirt", "baslate", "tuff", "granite", "andesite", "deepslate", "stone", "netherrack"]) -> bool:
     if agent.detect(direction):
         return False
-    return agent_use_item(direction, ["cobblestone", "cobbled_deepslate", "dirt", "baslate", "tuff", "granite", "andesite", "deepslate", "stone", "netherrack"])
+    return agent_use_item(direction, block_names)
 
-def build_space(width: int, height: int, depth: int, *, f: bool = False, b: bool = False, l: bool = False, r: bool = False, u: bool = False, d: bool = False):
+def build_space(width: int, height: int, depth: int, *, f: bool = False, b: bool = False, l: bool = False, r: bool = False, u: bool = False, d: bool = False, block_names: List[str] = ["cobblestone", "cobbled_deepslate", "dirt", "baslate", "tuff", "granite", "andesite", "deepslate", "stone", "netherrack"]):
     agent_move("up", height-1, True)  # 開始ポジションに移動（左上）
     for d in range(depth):
         for w in range(width):
             if u:
-                agent_put_nomel_block("up")
+                agent_put_block("up")
             for h in range(height):
                 if l and w == 0:
-                    agent_put_nomel_block("left")
+                    agent_put_block("left")
                 if r and w == (width-1):
-                    agent_put_nomel_block("right")
+                    agent_put_block("right")
                 if b and d == 0:
-                    agent_put_nomel_block("back")
+                    agent_put_block("back")
                 if f and d == depth-1:
-                    agent_put_nomel_block("forward")
+                    agent_put_block("forward")
                 if h < height-1:
                     agent_move("down", 1, True)
                     agent.collect()
             if d:
-                agent_put_nomel_block("down")
+                agent_put_block("down")
             agent_move("up", height-1, True)
             if w < width-1:
                 agent_move("right", 1, True)
@@ -184,7 +184,7 @@ def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = Tr
             
 def mining(depth: int, line_number: str = "none") -> None:
     """資源を収集しながら掘り進める"""
-    start_position = agent.position
+    start_position = [agent.position.x, agent.position.y, agent.position.z]
     for step in range(1, depth):
         agent.say(f"Mining : {line_number} - {step}/{depth}")
         if agent.detect("forward"):
@@ -192,7 +192,7 @@ def mining(depth: int, line_number: str = "none") -> None:
             explore_and_mine_resources(ignore_block_name_pattern, False)
         agent.move("forward")
     agent.say("Return...")
-    agent.teleport(start_position)
+    safe_teleport(start_position)
     agent.say("Mining : finish")
 
 def branch_mining() -> bool:
