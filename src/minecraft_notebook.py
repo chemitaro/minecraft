@@ -207,7 +207,6 @@ def branch_mining() -> bool:
             agent.destroy("forward")
         agent.move("forward")
         agent.say(f"Branch_mining : {step}/{length} {agent.position}")
-        agent.say(is_mining_position())
         if is_mining_position() == True:
             if agent.detect("right") == True:
                 agent.turn("right")
