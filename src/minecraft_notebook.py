@@ -242,7 +242,7 @@ def branch_mining() -> bool:
     return True
 
 @on_event("PlayerMessage")
-def process_chat_command(message, sender, receiver, message_type) -> None:
+def process_chat_command(message: str, sender: str, receiver: str, message_type: str) -> None:
     # Play a sound when someone said something
 
     if sender == "yutaf" and message_type == "chat":
