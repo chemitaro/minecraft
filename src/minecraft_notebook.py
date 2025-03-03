@@ -1,12 +1,7 @@
-import fnmatch
-from typing import List
-import minecraft
-import time
-import random
-import re
+import fnmatch, minecraft, time, random, re
+from typing import List, Union
 from enum import Enum
 from dataclasses import dataclass
-from typing import Union
 
 ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrack|water|flowing_water|lava|flowing_lava|fire|dirt|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
 normal_block_name_pattern = re.compile(r'^(?:cobblestone|cobbled_deepslate|deepslate|stone|netherrack|dirt|baslate|tuff|granite|andesite|blackstone)$')
@@ -26,16 +21,16 @@ class WorldEnum(Enum):
     NETHER = WorldType(name="nether", collection_location=[-11, 88, 160], teleport_step_length=22, max_y=122, min_y=5)
     THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], teleport_step_length=25, max_y=122, min_y=5)
 
-current_warld_enum = WorldEnum.OVER_WARLD
+current_world_enum = WorldEnum.OVER_WARLD
 
 def switch_world_type() -> WorldEnum:  # Worldの種類を変更する
-    global current_warld_enum
+    global current_world_enum
     enum_members = list(WorldEnum)
-    current_index = enum_members.index(current_warld_enum)
+    current_index = enum_members.index(current_world_enum)
     next_index = (current_index + 1) % len(enum_members)
-    current_warld_enum = enum_members[next_index]
-    agent.say(f"switched : {current_warld_enum.value.name}")
-    return current_warld_enum
+    current_world_enum = enum_members[next_index]
+    agent.say(f"switched : {current_world_enum.value.name}")
+    return current_world_enum
 
 def show_agent_item_list():
     """エージェントのアイテム一覧を表示"""
@@ -45,7 +40,7 @@ def show_agent_item_list():
 
 def show_agemt_location():
     """エージェントの場所と周囲の状況を表示する"""
-    agent.say(f"World : {current_warld_enum.value.name}")
+    agent.say(f"World : {current_world_enum.value.name}")
     agent.say(f"Position : {agent.position}")
     agent.say(f"Rotation : {azimuth_dict[agent.rotation]}")
     for direction in ["forward", "back", "left", "right", "up", "down"]:
@@ -53,7 +48,7 @@ def show_agemt_location():
 
 def safe_teleport(position: List):
     """多段階で移動する安全なテレポート"""
-    step_length, start_x, start_z = current_warld_enum.value.teleport_step_length, agent.position.x, agent.position.z
+    step_length, start_x, start_z = current_world_enum.value.teleport_step_length, agent.position.x, agent.position.z
     distance_x, distance_z = position[0] - start_x, position[2] - start_z
     move_sign_x, move_sign_z = 1 if distance_x > 0 else -1, 1 if distance_z > 0 else -1
     for step in range(1, abs(int(distance_x/step_length))+1):
@@ -78,7 +73,7 @@ def agent_move(direction: str, count: int = 1, is_destroy: bool = False):
 def agent_item_delivery() -> None:
     """エージェントのアイテムを回収場所にドロップする"""
     befor_position = agent.position
-    safe_teleport(current_warld_enum.value.collection_location)
+    safe_teleport(current_world_enum.value.collection_location)
     time.sleep(0.5)
     for slot in range(1, 28):
         direction = random.choice(["forward", "back", "left", "right"])
