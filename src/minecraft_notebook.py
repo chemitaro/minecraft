@@ -167,7 +167,7 @@ def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> bool:
             agent_put_block(direction="left")
             agent_put_block(direction="right")
             agent_put_block(direction="back")
-            agent_put_block(direction="down")
+            agent_put_block(direction=opposite_direction_dict[direction])
         agent_move(direction=opposite_direction_dict[direction], is_destroy=True)
         agent_use_item(direction="forward", item_names=["ladder"])
         agent_move(direction=direction)
