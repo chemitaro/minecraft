@@ -1,12 +1,24 @@
-import fnmatch, minecraft, time, random, re
-from typing import List, Union
-from enum import Enum
+import fnmatch
+import random
+import re
+import time
 from dataclasses import dataclass
+from enum import Enum
+from typing import List, Union
 
-ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrack|water|flowing_water|lava|flowing_lava|fire|dirt|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
-normal_block_name_pattern = re.compile(r'^(?:cobblestone|cobbled_deepslate|deepslate|stone|netherrack|dirt|baslate|tuff|granite|andesite|blackstone)$')
-liquid_block_name_pattern = re.compile(r'^(?:water|flowing_water|lava|flowing_lava)$')
-player_mention, azimuth_dict, opposite_direction_dict = "@yutaf ", {-90: "E", 0: "S", 90: "W", -180: "N"}, {"forward": "back", "back": "forward", "up": "down", "down": "up", "left": "right", "right": "left"}
+ignore_block_name_pattern = re.compile(
+    r"^(?:air|deepslate|stone|netherrack|water|flowing_water|lava|flowing_lava|fire|dirt|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$"
+)
+normal_block_name_pattern = re.compile(
+    r"^(?:cobblestone|cobbled_deepslate|deepslate|stone|netherrack|dirt|baslate|tuff|granite|andesite|blackstone)$"
+)
+liquid_block_name_pattern = re.compile(r"^(?:water|flowing_water|lava|flowing_lava)$")
+player_mention, azimuth_dict, opposite_direction_dict = (
+    "@yutaf ",
+    {-90: "E", 0: "S", 90: "W", -180: "N"},
+    {"forward": "back", "back": "forward", "up": "down", "down": "up", "left": "right", "right": "left"},
+)
+
 
 @dataclass
 class WorldType:
@@ -16,12 +28,17 @@ class WorldType:
     max_y: int
     min_y: int
 
+
 class WorldEnum(Enum):
-    OVER_WORLD = WorldType(name="over_world", collection_location=[-156, 76, 1263], teleport_step_length=176, max_y=320, min_y=-60)
+    OVER_WORLD = WorldType(
+        name="over_world", collection_location=[-156, 76, 1263], teleport_step_length=176, max_y=320, min_y=-60
+    )
     NETHER = WorldType(name="nether", collection_location=[-11, 88, 160], teleport_step_length=22, max_y=122, min_y=5)
     THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], teleport_step_length=25, max_y=122, min_y=5)
 
+
 current_world_enum = WorldEnum.OVER_WORLD
+
 
 def switch_world_type() -> WorldEnum:  # Worldの種類を変更する
     global current_world_enum
@@ -32,11 +49,13 @@ def switch_world_type() -> WorldEnum:  # Worldの種類を変更する
     agent.say(f"switched : {current_world_enum.value.name}")
     return current_world_enum
 
+
 def show_agent_item_list() -> None:
     """エージェントのアイテム一覧を表示"""
     for i in range(1, 28):
         item = agent.get_item(i)
         agent.say(f"{i} : {item.id} {item.stack_size}/{item.max_stack_size}")
+
 
 def show_agent_location() -> None:
     """エージェントの場所と周囲の状況を表示する"""
@@ -46,29 +65,33 @@ def show_agent_location() -> None:
     for direction in ["forward", "back", "left", "right", "up", "down"]:
         agent.say(f"- {direction} : {agent.inspect(direction).id}")
 
+
 def safe_teleport(position: List) -> None:
     """多段階で移動する安全なテレポート"""
     step_length, start_x, start_z = current_world_enum.value.teleport_step_length, agent.position.x, agent.position.z
     distance_x, distance_z = position[0] - start_x, position[2] - start_z
     move_sign_x, move_sign_z = 1 if distance_x > 0 else -1, 1 if distance_z > 0 else -1
-    for step in range(1, abs(int(distance_x/step_length))+1):
-        agent.teleport([start_x + step*step_length*move_sign_x, agent.position.y, agent.position.z])
+    for step in range(1, abs(int(distance_x / step_length)) + 1):
+        agent.teleport([start_x + step * step_length * move_sign_x, agent.position.y, agent.position.z])
         agent.say(f"teleport_x{step} - {agent.position}")
-    for step in range(1, abs(int(distance_z/step_length))+1):
-        agent.teleport([agent.position.x, agent.position.y, start_z + step*step_length*move_sign_z])
+    for step in range(1, abs(int(distance_z / step_length)) + 1):
+        agent.teleport([agent.position.x, agent.position.y, start_z + step * step_length * move_sign_z])
         agent.say(f"teleport_z{step} - {agent.position}")
     agent.teleport(position)
     agent.say(f"safe_teleport: finish - {agent.position}")
 
+
 def agent_turn(direction: str, count: int = 1) -> None:
     for i in range(count):
         agent.turn(direction)
+
 
 def agent_move(direction: str, count: int = 1, is_destroy: bool = False) -> None:
     for i in range(count):
         while is_destroy and agent.detect(direction):
             agent.destroy(direction)
         agent.move(direction)
+
 
 def agent_item_delivery() -> None:
     """エージェントのアイテムを回収場所にドロップする"""
@@ -83,9 +106,11 @@ def agent_item_delivery() -> None:
     safe_teleport([before_position.x, before_position.y, before_position.z])
     agent.say(f"return : {before_position}")
 
+
 def check_and_clear_agent_inventory() -> None:
     if not agent.get_item(27).id == "air":
         agent_item_delivery()
+
 
 def set_agent_azimuth(azimuth: int) -> bool:
     """エージェントの向く方角を変える"""
@@ -95,22 +120,31 @@ def set_agent_azimuth(azimuth: int) -> bool:
         agent.turn("right")
     return False
 
+
 def agent_teleport_player() -> None:
     """エージェントがプレイヤーの前にテレポートする"""
     agent.teleport(["~0", "~0", "~0"])
 
+
 def is_block_list_match_direction(direction: str, block_name_pattern: re.Pattern) -> bool:
     """指定された方向において、ブロックのリストが所定のパターンにマッチするかを判定し、結果をブール値（True/False）で返却します。"""
     return bool(block_name_pattern.match(agent.inspect(direction).id))
+
 
 def get_agent_storage_socket_index(items: List[Union[str, re.Pattern]]) -> int:
     """指定したアイテムがエージェントストレージのどのソケットに格納されているか確認し、ソケット番号を返却します。"""
     for item_name in items:
         for socket_index in range(1, 28):
             check_item = agent.get_item(socket_index)
-            if isinstance(item_name, str) and fnmatch.fnmatch(check_item.id, item_name) or isinstance(item_name, re.Pattern) and bool(item_name.match(check_item.id)):
+            if (
+                isinstance(item_name, str)
+                and fnmatch.fnmatch(check_item.id, item_name)
+                or isinstance(item_name, re.Pattern)
+                and bool(item_name.match(check_item.id))
+            ):
                 return socket_index
     return -1
+
 
 def agent_use_item(direction: str, item_names: List[Union[str, re.Pattern]]) -> bool:
     """エージェントが指定したアイテムを設置する"""
@@ -121,44 +155,75 @@ def agent_use_item(direction: str, item_names: List[Union[str, re.Pattern]]) -> 
     agent.place(direction, socket_index)
     return True
 
-def agent_put_block(direction: str, block_names: List[Union[str, re.Pattern]] = [re.compile(r'^(?:cobblestone|cobbled_deepslate|)$'), re.compile(r'^(?:deepslate|stone|dirt|baslate|tuff|granite|andesite|blackstone)$'), re.compile(r'^(?:netherrack)$')]) -> bool:
+
+def agent_put_block(
+    direction: str,
+    block_names: List[Union[str, re.Pattern]] = [
+        re.compile(r"^(?:cobblestone|cobbled_deepslate|)$"),
+        re.compile(r"^(?:deepslate|stone|dirt|baslate|tuff|granite|andesite|blackstone)$"),
+        re.compile(r"^(?:netherrack)$"),
+    ],
+) -> bool:
     if agent.detect(direction):
         return False
     return agent_use_item(direction, block_names)
 
-def build_space(width: int, height: int, depth: int, *, f: bool = False, b: bool = False, l: bool = False, r: bool = False, u: bool = False, d: bool = False, safe: bool = False, block_names: List[Union[str,re.Pattern]] = [re.compile(r'^(?:cobblestone|cobbled_deepslate|)$'), re.compile(r'^(?:deepslate|stone|dirt|baslate|tuff|granite|andesite|blackstone)$'), re.compile(r'^(?:netherrack)$')]) -> None:
-    agent_move("up", height-1, True)  # 開始ポジションに移動（左上）
+
+def build_space(
+    width: int,
+    height: int,
+    depth: int,
+    *,
+    f: bool = False,
+    b: bool = False,
+    l: bool = False,
+    r: bool = False,
+    u: bool = False,
+    d: bool = False,
+    safe: bool = False,
+    block_names: List[Union[str, re.Pattern]] = [
+        re.compile(r"^(?:cobblestone|cobbled_deepslate|)$"),
+        re.compile(r"^(?:deepslate|stone|dirt|baslate|tuff|granite|andesite|blackstone)$"),
+        re.compile(r"^(?:netherrack)$"),
+    ],
+) -> None:
+    agent_move("up", height - 1, True)  # 開始ポジションに移動（左上）
     for dep in range(depth):
         for w in range(width):
             if u:
                 agent_put_block("up")
             for h in range(height):
-                if safe or (f and d == depth-1):
+                if safe or (f and d == depth - 1):
                     agent_put_block("forward")
                 if l and w == 0:
                     agent_put_block("left")
-                if r and w == (width-1):
+                if r and w == (width - 1):
                     agent_put_block("right")
                 if b and d == 0:
                     agent_put_block("back")
-                if h < height-1:
+                if h < height - 1:
                     agent_move("down", 1, True)
                     agent.collect()
             if d:
                 agent_put_block("down")
-            agent_move("up", height-1, True)
-            if w < width-1:
+            agent_move("up", height - 1, True)
+            if w < width - 1:
                 agent_move("right", 1, True)
                 agent.collect()
-        agent_move("left", width-1, True)
-        if dep < depth-1:
+        agent_move("left", width - 1, True)
+        if dep < depth - 1:
             agent_move("forward", 1, True)
             agent.collect()
-    agent_move("down", height-1, True)
+    agent_move("down", height - 1, True)
+
 
 def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> bool:
     for i in range(step):
-        if agent.inspect(direction).id == "bedrock" or agent.position.y >= current_world_enum.value.max_y or agent.position.y <= current_world_enum.value.min_y:
+        if (
+            agent.inspect(direction).id == "bedrock"
+            or agent.position.y >= current_world_enum.value.max_y
+            or agent.position.y <= current_world_enum.value.min_y
+        ):
             return False
         agent_move(direction=direction, is_destroy=True)
         agent.collect()
@@ -174,6 +239,7 @@ def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> bool:
     agent_use_item(direction="forward", item_names=["ladder"])
     return True
 
+
 def generate_flint() -> None:
     """火打石を量産する"""
     running = True
@@ -184,9 +250,16 @@ def generate_flint() -> None:
         agent.collect()
     agent.say("generate_flint : finish")
 
+
 def is_mining_position() -> bool:
     """指定された位置情報がマイニング対象のポジションであるかどうかを判定し、結果をブール値（True/False）で返却します。"""
-    return int(agent.position.y) % 8 == 0 and int(agent.position.x) % 4 == 0 or int(agent.position.y) % 4 == 0 and (int(agent.position.x) + 2) % 4 == 0
+    return (
+        int(agent.position.y) % 8 == 0
+        and int(agent.position.x) % 4 == 0
+        or int(agent.position.y) % 4 == 0
+        and (int(agent.position.x) + 2) % 4 == 0
+    )
+
 
 def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = True) -> None:
     """プレイヤーが探索しながら資源を検出し、自動で採掘する処理を実行する関数。"""
@@ -200,7 +273,8 @@ def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = Tr
             explore_and_mine_resources(block_name_pattern, mehtod)
             agent.move(opposite_direction_dict[direction])
             agent.say(f" -lose : {agent.position}")
-            
+
+
 def fall_down(explore: bool = False) -> None:
     in_air = not agent.detect("down")
     while in_air:
@@ -208,6 +282,7 @@ def fall_down(explore: bool = False) -> None:
         if explore:
             explore_and_mine_resources(ignore_block_name_pattern, False)
         in_air = not agent.detect("down")
+
 
 def climb_up(explore: bool = False) -> None:
     forward_block = agent.detect("forward")
@@ -217,6 +292,7 @@ def climb_up(explore: bool = False) -> None:
             explore_and_mine_resources(ignore_block_name_pattern, False)
         forward_block = agent.detect("forward")
 
+
 def walk_along_the_terrain(step: int = 1, explore: bool = False) -> None:
     for i in range(step):
         fall_down(explore)
@@ -224,6 +300,7 @@ def walk_along_the_terrain(step: int = 1, explore: bool = False) -> None:
         agent.move("forward")
         if explore:
             explore_and_mine_resources(ignore_block_name_pattern, False)
+
 
 def mining(depth: int, line_number: str = "none") -> None:
     """資源を収集しながら掘り進める"""
@@ -237,6 +314,7 @@ def mining(depth: int, line_number: str = "none") -> None:
     agent.say("Return...")
     safe_teleport(start_position)
     agent.say("Mining : finish")
+
 
 def branch_mining() -> bool:
     """ブランチマイニングを実行する"""
@@ -266,6 +344,7 @@ def branch_mining() -> bool:
                 agent.turn("right")
     return True
 
+
 @on_event("PlayerMessage")
 def process_chat_command(message: str, sender: str, receiver: str, message_type: str) -> None:
     # Play a sound when someone said something
@@ -275,7 +354,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
             # build_space(2, 3, 50, l=True, r=True, u=True, d=True, f=True, safe=True)
-            agent_use_item("f", ["ladder"])
+            walk_along_the_terrain(step=30, explore=True)
             agent.say("troal fin")
         elif command == "switch":
             switch_world_type()
@@ -290,7 +369,17 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         elif command == "turn":
             agent_turn(chunked_messages[1], 1)
         elif command == "move":
-            agent_move(direction=chunked_messages[1], count=int(chunked_messages[2]), is_destroy=("destroy" in chunked_messages))
+            agent_move(
+                direction=chunked_messages[1],
+                count=int(chunked_messages[2]),
+                is_destroy=("destroy" in chunked_messages),
+            )
+        elif command == "fall":
+            fall_down()
+        elif command == "climb":
+            climb_up()
+        elif command == "walk":
+            walk_along_the_terrain(step=int(chunked_messages[1]), explore=("exp" in chunked_messages))
         elif command == "item_list":
             show_agent_item_list()
         elif command == "what_block":
@@ -304,8 +393,21 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         elif command == "flint":
             generate_flint()
         elif command == "space":
-            build_space(int(chunked_messages[1]), int(chunked_messages[2]), int(chunked_messages[3]), l=("l" in chunked_messages), r=("r" in chunked_messages), u=("u" in chunked_messages), d=("d" in chunked_messages), f=("f" in chunked_messages), safe=("safe" in chunked_messages))
+            build_space(
+                int(chunked_messages[1]),
+                int(chunked_messages[2]),
+                int(chunked_messages[3]),
+                l=("l" in chunked_messages),
+                r=("r" in chunked_messages),
+                u=("u" in chunked_messages),
+                d=("d" in chunked_messages),
+                f=("f" in chunked_messages),
+                safe=("safe" in chunked_messages),
+            )
         elif command == "ladder":
-            build_ladder(direction=chunked_messages[1], step=int(chunked_messages[2]), safe=("safe" in chunked_messages))
+            build_ladder(
+                direction=chunked_messages[1], step=int(chunked_messages[2]), safe=("safe" in chunked_messages)
+            )
+
 
 agent.say(player_mention + "run script")
