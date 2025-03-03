@@ -201,6 +201,30 @@ def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = Tr
             agent.move(opposite_direction_dict[direction])
             agent.say(f" -lose : {agent.position}")
             
+def fall_down(explore: bool = False) -> None:
+    in_air = not agent.detect("down")
+    while in_air:
+        agent.move("down")
+        if explore:
+            explore_and_mine_resources(ignore_block_name_pattern, False)
+        in_air = not agent.detect("down")
+
+def climb_up(explore: bool = False) -> None:
+    forward_block = agent.detect("forward")
+    while forward_block:
+        agent_move("up", 1, True)
+        if explore:
+            explore_and_mine_resources(ignore_block_name_pattern, False)
+        forward_block = agent.detect("forward")
+
+def walk_along_the_terrain(step: int = 1, explore: bool = False) -> None:
+    for i in range(step):
+        fall_down(explore)
+        climb_up(explore)
+        agent.move("forward")
+        if explore:
+            explore_and_mine_resources(ignore_block_name_pattern, False)
+
 def mining(depth: int, line_number: str = "none") -> None:
     """資源を収集しながら掘り進める"""
     start_position = [agent.position.x, agent.position.y, agent.position.z]
