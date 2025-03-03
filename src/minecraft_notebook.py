@@ -8,6 +8,7 @@ from enum import Enum
 from dataclasses import dataclass
 
 ignore_block_name_pattern = re.compile(r'^(?:air|deepslate|stone|netherrack|water|flowing_water|lava|flowing_lava|fire|dirt|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$')
+normal_block_name_pattern = re.compile(r'^(?:cobblestone|cobbled_deepslate|deepslate|stone|netherrack|dirt|baslate|tuff|granite|andesite|blackstone)$')
 player_mention, azimuth_dict, opposite_direction_dict = "@yutaf ", {-90: "E", 0: "S", 90: "W", -180: "N"}, {"forward": "back", "back": "forward", "up": "down", "down": "up", "left": "right", "right": "left"}
 
 @dataclass
@@ -103,16 +104,16 @@ def is_block_list_match_direction(direction: str, block_name_pattern: re.Pattern
     """指定された方向において、ブロックのリストが所定のパターンにマッチするかを判定し、結果をブール値（True/False）で返却します。"""
     return bool(block_name_pattern.match(agent.inspect(direction).id))
 
-def get_agent_storage_socket_index(items: List[str]) -> int:
+def get_agent_storage_socket_index(items: List[re.Pattern]) -> int:
     """指定したアイテムがエージェントストレージのどのソケットに格納されているか確認し、ソケット番号を返却します。"""
     for item_name in items:
         for socket_index in range(1, 28):
             check_item = agent.get_item(socket_index)
-            if fnmatch.fnmatch(check_item.id, item_name):
+            if bool(item_name.match(check_item.id)):
                 return socket_index
     return -1
 
-def agent_use_item(direction: str, item_names: List[str]) -> bool:
+def agent_use_item(direction: str, item_names: List[re.Pattern]) -> bool:
     """エージェントが指定したアイテムを設置する"""
     socket_index = get_agent_storage_socket_index(item_names)
     if socket_index < 1:
@@ -121,26 +122,26 @@ def agent_use_item(direction: str, item_names: List[str]) -> bool:
     agent.place(direction, socket_index)
     return True
 
-def agent_put_block(direction: str, block_names: List[str] = ["cobblestone", "cobbled_deepslate", "dirt", "baslate", "tuff", "granite", "andesite", "deepslate", "stone", "netherrack"]) -> bool:
+def agent_put_block(direction: str, block_names: List[re.Pattern] = [normal_block_name_pattern]) -> bool:
     if agent.detect(direction):
         return False
     return agent_use_item(direction, block_names)
 
-def build_space(width: int, height: int, depth: int, *, f: bool = False, b: bool = False, l: bool = False, r: bool = False, u: bool = False, d: bool = False, block_names: List[str] = ["cobblestone", "cobbled_deepslate", "dirt", "baslate", "tuff", "granite", "andesite", "deepslate", "stone", "netherrack"]):
+def build_space(width: int, height: int, depth: int, *, f: bool = False, b: bool = False, l: bool = False, r: bool = False, u: bool = False, d: bool = False, safe: bool = False, block_names: List[str] = [re.compile(r'^(?:cobblestone|cobbled_deepslate|)$'), re.compile(r'^(?:deepslate|stone|dirt|baslate|tuff|granite|andesite|blackstone)$'), re.compile(r'^(?:netherrack)$')]):
     agent_move("up", height-1, True)  # 開始ポジションに移動（左上）
-    for d in range(depth):
+    for dep in range(depth):
         for w in range(width):
             if u:
                 agent_put_block("up")
             for h in range(height):
+                if safe or (f and d == depth-1):
+                    agent_put_block("forward")
                 if l and w == 0:
                     agent_put_block("left")
                 if r and w == (width-1):
                     agent_put_block("right")
                 if b and d == 0:
                     agent_put_block("back")
-                if f and d == depth-1:
-                    agent_put_block("forward")
                 if h < height-1:
                     agent_move("down", 1, True)
                     agent.collect()
@@ -149,10 +150,11 @@ def build_space(width: int, height: int, depth: int, *, f: bool = False, b: bool
             agent_move("up", height-1, True)
             if w < width-1:
                 agent_move("right", 1, True)
+                agent.collect()
         agent_move("left", width-1, True)
-        if d < depth-1:
-            check_and_clear_agent_inventory()
+        if dep < depth-1:
             agent_move("forward", 1, True)
+            agent.collect()
     agent_move("down", height-1, True)
 
 def generate_flint():
@@ -230,7 +232,7 @@ def process_chat_command(message, sender, receiver, message_type):
         command = chunked_messages[0]
 
         if command == "trial":  # ここに実行する実験的な処理を記述する
-            build_space(12, 8, 50, l=True, r=True, u=True, d=True, f=True)
+            build_space(2, 3, 50, l=True, r=True, u=True, d=True, f=True, safe=True)
             agent.say("troal fin")
         elif command == "switch":
             switch_world_type()
