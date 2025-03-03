@@ -300,6 +300,7 @@ def walk_along_the_terrain(step: int = 1, explore: bool = False) -> None:
         agent.move("forward")
         if explore:
             explore_and_mine_resources(ignore_block_name_pattern, False)
+            check_and_clear_agent_inventory()
 
 
 def mining(depth: int, line_number: str = "none") -> None:
