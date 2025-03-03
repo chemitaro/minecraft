@@ -156,7 +156,7 @@ def build_space(width: int, height: int, depth: int, *, f: bool = False, b: bool
             agent.collect()
     agent_move("down", height-1, True)
 
-def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> None:
+def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> bool:
     for i in range(step):
         if agent.inspect(direction).id == "bedrock" or agent.position.y >= current_world_enum.value.max_y or agent.position.y <= current_world_enum.value.min_y:
             return False
@@ -172,6 +172,7 @@ def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> None:
         agent_use_item(direction="forward", item_names=["ladder"])
         agent_move(direction=direction)
     agent_use_item(direction="forward", item_names=["ladder"])
+    return True
 
 def generate_flint() -> None:
     """火打石を量産する"""
@@ -226,14 +227,14 @@ def branch_mining() -> bool:
             agent.destroy("forward")
         agent.move("forward")
         agent.say(f"Branch_mining : {step}/{length} {agent.position}")
-        if is_mining_position() == True:
-            if agent.detect("right") == True:
+        if is_mining_position():
+            if agent.detect("right"):
                 agent.turn("right")
                 mining(500, f"{step}R")
                 agent_item_delivery()
                 time.sleep(1)
                 agent.turn("left")
-            if agent.detect("left") == True:
+            if agent.detect("left"):
                 agent.turn("left")
                 mining(500, f"{step}L")
                 agent_item_delivery()
