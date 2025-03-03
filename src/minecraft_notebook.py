@@ -158,7 +158,7 @@ def build_space(width: int, height: int, depth: int, *, f: bool = False, b: bool
 
 def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> None:
     for i in range(step):
-        if agent.inspect(direction).id == "bedrock" or agent.position.y >= current_warld_enum.value.max_y or agent.position.y <= current_warld_enum.value.min_y:
+        if agent.inspect(direction).id == "bedrock" or agent.position.y >= current_world_enum.value.max_y or agent.position.y <= current_world_enum.value.min_y:
             return False
         agent_move(direction=direction, is_destroy=True)
         agent.collect()
