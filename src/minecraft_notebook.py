@@ -38,7 +38,7 @@ def show_agent_item_list() -> None:
         item = agent.get_item(i)
         agent.say(f"{i} : {item.id} {item.stack_size}/{item.max_stack_size}")
 
-def show_agemt_location() -> None:
+def show_agent_location() -> None:
     """エージェントの場所と周囲の状況を表示する"""
     agent.say(f"World : {current_world_enum.value.name}")
     agent.say(f"Position : {agent.position}")
@@ -72,7 +72,7 @@ def agent_move(direction: str, count: int = 1, is_destroy: bool = False) -> None
 
 def agent_item_delivery() -> None:
     """エージェントのアイテムを回収場所にドロップする"""
-    befor_position = agent.position
+    before_position = agent.position
     safe_teleport(current_world_enum.value.collection_location)
     time.sleep(0.5)
     for slot in range(1, 28):
@@ -80,8 +80,8 @@ def agent_item_delivery() -> None:
         agent.say(f"- drop : {agent.get_item(slot).id}")
         agent.drop(direction, 64, slot)
         time.sleep(0.3)
-    safe_teleport([befor_position.x, befor_position.y, befor_position.z])
-    agent.say(f"return : {befor_position}")
+    safe_teleport([before_position.x, before_position.y, before_position.z])
+    agent.say(f"return : {before_position}")
 
 def check_and_clear_agent_inventory() -> None:
     if not agent.get_item(27).id == "air":
@@ -218,7 +218,7 @@ def branch_mining() -> bool:
     """ブランチマイニングを実行する"""
     length = 1000
     set_agent_azimuth(-90)  # 掘削方向の西側を向く
-    show_agemt_location()
+    show_agent_location()
     if not agent.position.y % 4 == 0:
         agent.say("高さが間違っています")
         return False
@@ -276,7 +276,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         elif command == "delivery":
             agent_item_delivery()
         elif command == "where":
-            show_agemt_location()
+            show_agent_location()
         elif command == "flint":
             generate_flint()
         elif command == "space":
