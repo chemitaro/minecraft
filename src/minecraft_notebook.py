@@ -32,13 +32,13 @@ def switch_world_type() -> WorldEnum:  # Worldの種類を変更する
     agent.say(f"switched : {current_world_enum.value.name}")
     return current_world_enum
 
-def show_agent_item_list():
+def show_agent_item_list() -> None:
     """エージェントのアイテム一覧を表示"""
     for i in range(1, 28):
         item = agent.get_item(i)
         agent.say(f"{i} : {item.id} {item.stack_size}/{item.max_stack_size}")
 
-def show_agemt_location():
+def show_agemt_location() -> None:
     """エージェントの場所と周囲の状況を表示する"""
     agent.say(f"World : {current_world_enum.value.name}")
     agent.say(f"Position : {agent.position}")
@@ -46,7 +46,7 @@ def show_agemt_location():
     for direction in ["forward", "back", "left", "right", "up", "down"]:
         agent.say(f"- {direction} : {agent.inspect(direction).id}")
 
-def safe_teleport(position: List):
+def safe_teleport(position: List) -> None:
     """多段階で移動する安全なテレポート"""
     step_length, start_x, start_z = current_world_enum.value.teleport_step_length, agent.position.x, agent.position.z
     distance_x, distance_z = position[0] - start_x, position[2] - start_z
@@ -60,11 +60,11 @@ def safe_teleport(position: List):
     agent.teleport(position)
     agent.say(f"safe_teleport: finish - {agent.position}")
 
-def agent_turn(direction: str, count: int = 1):
+def agent_turn(direction: str, count: int = 1) -> None:
     for i in range(count):
         agent.turn(direction)
 
-def agent_move(direction: str, count: int = 1, is_destroy: bool = False):
+def agent_move(direction: str, count: int = 1, is_destroy: bool = False) -> None:
     for i in range(count):
         while is_destroy and agent.detect(direction):
             agent.destroy(direction)
@@ -95,7 +95,7 @@ def set_agent_azimuth(azimuth: int) -> bool:
         agent.turn("right")
     return False
 
-def agent_teleport_player():
+def agent_teleport_player() -> None:
     """エージェントがプレイヤーの前にテレポートする"""
     agent.teleport(["~0", "~0", "~0"])
 
@@ -126,7 +126,7 @@ def agent_put_block(direction: str, block_names: List[Union[str, re.Pattern]] = 
         return False
     return agent_use_item(direction, block_names)
 
-def build_space(width: int, height: int, depth: int, *, f: bool = False, b: bool = False, l: bool = False, r: bool = False, u: bool = False, d: bool = False, safe: bool = False, block_names: List[Union[str,re.Pattern]] = [re.compile(r'^(?:cobblestone|cobbled_deepslate|)$'), re.compile(r'^(?:deepslate|stone|dirt|baslate|tuff|granite|andesite|blackstone)$'), re.compile(r'^(?:netherrack)$')]):
+def build_space(width: int, height: int, depth: int, *, f: bool = False, b: bool = False, l: bool = False, r: bool = False, u: bool = False, d: bool = False, safe: bool = False, block_names: List[Union[str,re.Pattern]] = [re.compile(r'^(?:cobblestone|cobbled_deepslate|)$'), re.compile(r'^(?:deepslate|stone|dirt|baslate|tuff|granite|andesite|blackstone)$'), re.compile(r'^(?:netherrack)$')]) -> None:
     agent_move("up", height-1, True)  # 開始ポジションに移動（左上）
     for dep in range(depth):
         for w in range(width):
@@ -173,7 +173,7 @@ def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> None:
         agent_move(direction=direction)
     agent_use_item(direction="forward", item_names=["ladder"])
 
-def generate_flint():
+def generate_flint() -> None:
     """火打石を量産する"""
     running = True
     while running:
@@ -187,7 +187,7 @@ def is_mining_position() -> bool:
     """指定された位置情報がマイニング対象のポジションであるかどうかを判定し、結果をブール値（True/False）で返却します。"""
     return int(agent.position.y) % 8 == 0 and int(agent.position.x) % 4 == 0 or int(agent.position.y) % 4 == 0 and (int(agent.position.x) + 2) % 4 == 0
 
-def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = True):
+def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = True) -> None:
     """プレイヤーが探索しながら資源を検出し、自動で採掘する処理を実行する関数。"""
     directions = ["up", "left", "right", "back", "forward", "down"]
     for direction in directions:
@@ -239,9 +239,10 @@ def branch_mining() -> bool:
                 agent_item_delivery()
                 time.sleep(1)
                 agent.turn("right")
+    return True
 
 @on_event("PlayerMessage")
-def process_chat_command(message, sender, receiver, message_type):
+def process_chat_command(message, sender, receiver, message_type) -> None:
     # Play a sound when someone said something
 
     if sender == "yutaf" and message_type == "chat":
