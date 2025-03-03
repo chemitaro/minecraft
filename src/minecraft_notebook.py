@@ -23,7 +23,7 @@ class WorldType:
 
 class WorldEnum(Enum):
     OVER_WARLD = WorldType(name="over_warld", collection_location=[-156, 76, 1263], teleport_step_length=176, max_y=320, min_y=-60)
-    NETHER = WorldType(name="nether", collection_location=[-11, 88, 160], teleport_step_length=25, max_y=122, min_y=5)
+    NETHER = WorldType(name="nether", collection_location=[-11, 88, 160], teleport_step_length=22, max_y=122, min_y=5)
     THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], teleport_step_length=25, max_y=122, min_y=5)
 
 current_warld_enum = WorldEnum.OVER_WARLD
