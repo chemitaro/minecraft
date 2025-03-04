@@ -50,6 +50,14 @@ def switch_world_type() -> WorldEnum:  # Worldの種類を変更する
     return current_world_enum
 
 
+def show_chunk_range() -> None:
+    """現在地点のチャンクの範囲を表示する"""
+    agent.say(f"Current Chunk : {int(player.position.x // 16)}, {int(player.position.z // 16)}")
+    agent.say(
+        f"Chunk Range : {int(player.position.x // 16 * 16)} ~ {int(player.position.x // 16 * 16 + 16)}, {int(player.position.z // 16 * 16)} ~ {int(player.position.z // 16 * 16 + 16)}"
+    )
+
+
 def show_agent_item_list() -> None:
     """エージェントのアイテム一覧を表示"""
     for i in range(1, 28):
@@ -430,6 +438,8 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
             build_ladder(
                 direction=chunked_messages[1], step=int(chunked_messages[2]), safe=("safe" in chunked_messages)
             )
+        elif command == "chunk":
+            show_chunk_range()
 
 
 agent.say(player_mention + "run script")
