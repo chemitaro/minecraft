@@ -261,10 +261,13 @@ def is_mining_position() -> bool:
     )
 
 
-def explore_and_mine_resources(block_name_pattern: re.Pattern, mehtod: bool = True) -> None:
+def explore_and_mine_resources(
+    block_name_pattern: re.Pattern,
+    mehtod: bool = True,
+    first_directions: List[str] = ["up", "left", "right", "back", "forward", "down"],
+) -> None:
     """プレイヤーが探索しながら資源を検出し、自動で採掘する処理を実行する関数。"""
-    directions = ["up", "left", "right", "back", "forward", "down"]
-    for direction in directions:
+    for direction in first_directions:
         if is_block_list_match_direction(direction, block_name_pattern) == mehtod:
             agent.say(f" -find : {agent.inspect(direction).id} at {agent.position}")
             agent.destroy(direction)
@@ -280,7 +283,7 @@ def fall_down(explore: bool = False) -> None:
     while in_air:
         agent.move("down")
         if explore:
-            explore_and_mine_resources(ignore_block_name_pattern, False)
+            explore_and_mine_resources(ignore_block_name_pattern, False, ["left", "right", "forward", "back"])
         in_air = not agent.detect("down")
 
 
@@ -289,7 +292,7 @@ def climb_up(explore: bool = False) -> None:
     while forward_block:
         agent_move("up", 1, True)
         if explore:
-            explore_and_mine_resources(ignore_block_name_pattern, False)
+            explore_and_mine_resources(ignore_block_name_pattern, False, ["left", "right", "forward", "back"])
         forward_block = agent.detect("forward")
 
 
@@ -299,7 +302,7 @@ def walk_along_the_terrain(step: int = 1, explore: bool = False) -> None:
         climb_up(explore)
         agent.move("forward")
         if explore:
-            explore_and_mine_resources(ignore_block_name_pattern, False)
+            explore_and_mine_resources(ignore_block_name_pattern, False, ["up", "left", "right", "down"])
             check_and_clear_agent_inventory()
 
 
@@ -310,7 +313,7 @@ def mining(depth: int, line_number: str = "none") -> None:
         agent.say(f"Mining : {line_number} - {step}/{depth}")
         if agent.detect("forward"):
             agent.destroy("forward")
-            explore_and_mine_resources(ignore_block_name_pattern, False)
+            explore_and_mine_resources(ignore_block_name_pattern, False, ["up", "left", "right", "down"])
         agent.move("forward")
     agent.say("Return...")
     safe_teleport(start_position)
