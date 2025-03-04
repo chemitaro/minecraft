@@ -4,7 +4,7 @@ import re
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Union
+from typing import List, Optional, Union
 
 ignore_block_name_pattern = re.compile(
     r"^(?:air|deepslate|stone|netherrack|water|flowing_water|lava|flowing_lava|fire|dirt|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$"
@@ -126,9 +126,14 @@ def agent_teleport_player() -> None:
     agent.teleport(["~0", "~0", "~0"])
 
 
-def is_block_list_match_direction(direction: str, block_name_pattern: re.Pattern) -> bool:
+def is_block_list_match_direction(direction: str, block_name_pattern: Union[str, re.Pattern]) -> bool:
     """指定された方向において、ブロックのリストが所定のパターンにマッチするかを判定し、結果をブール値（True/False）で返却します。"""
-    return bool(block_name_pattern.match(agent.inspect(direction).id))
+    if isinstance(block_name_pattern, str):
+        return bool(fnmatch.fnmatch(agent.inspect(direction).id, block_name_pattern))
+    elif isinstance(block_name_pattern, re.Pattern):
+        return bool(block_name_pattern.match(agent.inspect(direction).id))
+    else:
+        raise ValueError("block_name_pattern must be a string or a re.Pattern")
 
 
 def get_agent_storage_socket_index(items: List[Union[str, re.Pattern]]) -> int:
@@ -262,7 +267,7 @@ def is_mining_position() -> bool:
 
 
 def explore_and_mine_resources(
-    block_name_pattern: re.Pattern,
+    block_name_pattern: Union[str, re.Pattern],
     mehtod: bool = True,
     first_directions: List[str] = ["up", "left", "right", "back", "forward", "down"],
 ) -> None:
@@ -276,6 +281,12 @@ def explore_and_mine_resources(
             explore_and_mine_resources(block_name_pattern, mehtod)
             agent.move(opposite_direction_dict[direction])
             agent.say(f" -lose : {agent.position}")
+
+
+# # 指定した方角のブロックを検出したら、そのブロックを破壊して、そのブロックを採掘する
+# def detect_and_destroy_block(direction: Optional[str] = None) -> None:
+#     if direction is None:
+        
 
 
 def fall_down(explore: bool = False) -> None:
@@ -304,6 +315,8 @@ def walk_along_the_terrain(step: int = 1, explore: bool = False) -> None:
         if explore:
             explore_and_mine_resources(ignore_block_name_pattern, False, ["up", "left", "right", "down"])
             check_and_clear_agent_inventory()
+
+
 
 
 def mining(depth: int, line_number: str = "none") -> None:
