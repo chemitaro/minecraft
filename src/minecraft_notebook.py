@@ -15,7 +15,14 @@ normal_block_name_pattern = re.compile(
 liquid_block_name_pattern = re.compile(r"^(?:water|flowing_water|lava|flowing_lava)$")
 player_mention = "@yutaf "
 azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
-opposite_direction_dict = {"forward": "back", "back": "forward", "up": "down", "down": "up", "left": "right", "right": "left"}
+opposite_direction_dict = {
+    "forward": "back",
+    "back": "forward",
+    "up": "down",
+    "down": "up",
+    "left": "right",
+    "right": "left",
+}
 
 
 @dataclass
@@ -194,7 +201,7 @@ def build_space(
     safe: bool = False,
     block_names: List[Union[str, re.Pattern]] = [
         re.compile(r"^(?:cobblestone|cobbled_deepslate|)$"),
-        re.compile(r"^(?:deepslate|stone|dirt|baslate|tuff|granite|andesite|blackstone)$"),
+        re.compile(r"^(?:deepslate|stone|dirt|diorite|baslate|tuff|granite|andesite|blackstone)$"),
         re.compile(r"^(?:netherrack)$"),
     ],
 ) -> None:
