@@ -284,9 +284,11 @@ def explore_and_mine_resources(
 
 
 # # 指定した方角のブロックを検出したら、そのブロックを破壊して、そのブロックを採掘する
-# def detect_and_destroy_block(direction: Optional[str] = None) -> None:
-#     if direction is None:
-        
+def detect_and_destroy_block(direction: Optional[str] = None) -> None:
+    if direction is None or agent.inspect(direction).id == "air":
+        explore_and_mine_resources(ignore_block_name_pattern, False)
+    else:
+        explore_and_mine_resources(agent.inspect(direction).id)
 
 
 def fall_down(explore: bool = False) -> None:
@@ -315,8 +317,6 @@ def walk_along_the_terrain(step: int = 1, explore: bool = False) -> None:
         if explore:
             explore_and_mine_resources(ignore_block_name_pattern, False, ["up", "left", "right", "down"])
             check_and_clear_agent_inventory()
-
-
 
 
 def mining(depth: int, line_number: str = "none") -> None:
@@ -371,7 +371,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
             # build_space(2, 3, 50, l=True, r=True, u=True, d=True, f=True, safe=True)
-            walk_along_the_terrain(step=30, explore=True)
+            detect_and_destroy_block("forward")
             agent.say("trial finish")
         elif command == "switch":
             switch_world_type()
@@ -397,6 +397,11 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
             climb_up()
         elif command == "walk":
             walk_along_the_terrain(step=int(chunked_messages[1]), explore=("exp" in chunked_messages))
+        elif command == "detect":
+            if len(chunked_messages) > 1:
+                detect_and_destroy_block(chunked_messages[1])
+            else:
+                detect_and_destroy_block()
         elif command == "item_list":
             show_agent_item_list()
         elif command == "what_block":
