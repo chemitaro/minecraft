@@ -356,7 +356,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         if command == "trial":  # ここに実行する実験的な処理を記述する
             # build_space(2, 3, 50, l=True, r=True, u=True, d=True, f=True, safe=True)
             walk_along_the_terrain(step=30, explore=True)
-            agent.say("troal fin")
+            agent.say("trial finish")
         elif command == "switch":
             switch_world_type()
         elif command == "come":  # エージェントを呼び出す
