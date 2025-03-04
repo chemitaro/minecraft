@@ -7,7 +7,7 @@ from enum import Enum
 from typing import List, Optional, Union
 
 ignore_block_name_pattern = re.compile(
-    r"^(?:air|deepslate|stone|netherrack|water|flowing_water|lava|flowing_lava|fire|dirt|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$"
+    r"^(?:air|deepslate|stone|netherrack|water|flowing_water|lava|flowing_lava|fire|dirt|diorite|baslate|tuff|granite|andesite|gravel|blackstone|cobblestone|cobbled_deepslate|grass_block|farmland|grass_path|podzol|mycelium|mud|bedrock)$"
 )
 normal_block_name_pattern = re.compile(
     r"^(?:cobblestone|cobbled_deepslate|deepslate|stone|netherrack|dirt|baslate|tuff|granite|andesite|blackstone)$"
