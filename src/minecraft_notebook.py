@@ -339,6 +339,7 @@ def mining(depth: int, line_number: str = "none") -> None:
         agent.say(f"Mining : {line_number} - {step}/{depth}")
         if agent.detect("forward"):
             agent.destroy("forward")
+            agent.collect()
             explore_and_mine_resources(ignore_block_name_pattern, False, ["up", "left", "right", "down"])
         agent.move("forward")
     agent.say("Return...")
@@ -357,6 +358,7 @@ def branch_mining() -> bool:
     for step in range(1, length):
         if agent.detect("forward"):
             agent.destroy("forward")
+            agent.collect()
         agent.move("forward")
         agent.say(f"Branch_mining : {step}/{length} {agent.position}")
         if is_mining_position():
