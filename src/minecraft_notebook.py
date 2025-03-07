@@ -102,10 +102,12 @@ def agent_turn(direction: str, count: int = 1) -> None:
         agent.turn(direction)
 
 
-def agent_move(direction: str, count: int = 1, is_destroy: bool = False) -> None:
+def agent_move(direction: str, count: int = 1, is_destroy: bool = False, is_collect: bool = False) -> None:
     for i in range(count):
         while is_destroy and agent.detect(direction):
             agent.destroy(direction)
+        if is_collect:
+            agent.collect()
         agent.move(direction)
 
 
@@ -208,7 +210,7 @@ def build_space(
         re.compile(r"^(?:netherrack)$"),
     ],
 ) -> None:
-    agent_move("up", height - 1, True)  # 開始ポジションに移動（左上）
+    agent_move("up", height - 1, True, True)  # 開始ポジションに移動（左上）
     for dep in range(depth):
         for w in range(width):
             if u:
@@ -223,19 +225,16 @@ def build_space(
                 if b and d == 0:
                     agent_put_block("back")
                 if h < height - 1:
-                    agent_move("down", 1, True)
-                    agent.collect()
+                    agent_move("down", 1, True, True)
             if d:
                 agent_put_block("down")
-            agent_move("up", height - 1, True)
+            agent_move("up", height - 1, True, True)
             if w < width - 1:
-                agent_move("right", 1, True)
-                agent.collect()
-        agent_move("left", width - 1, True)
+                agent_move("right", 1, True, True)
+        agent_move("left", width - 1, True, True)
         if dep < depth - 1:
-            agent_move("forward", 1, True)
-            agent.collect()
-    agent_move("down", height - 1, True)
+            agent_move("forward", 1, True, True)
+    agent_move("down", height - 1, True, True)
 
 
 def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> bool:
@@ -246,15 +245,14 @@ def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> bool:
             or agent.position.y <= current_world_enum.value.min_y
         ):
             return False
-        agent_move(direction=direction, is_destroy=True)
-        agent.collect()
+        agent_move(direction=direction, is_destroy=True, is_collect=True)
         agent_put_block(direction="forward")
         if safe:
             agent_put_block(direction="left")
             agent_put_block(direction="right")
             agent_put_block(direction="back")
             agent_put_block(direction=opposite_direction_dict[direction])
-        agent_move(direction=opposite_direction_dict[direction], is_destroy=True)
+        agent_move(direction=opposite_direction_dict[direction], is_destroy=True, is_collect=True)
         agent_use_item(direction="forward", item_names=["ladder"])
         agent_move(direction=direction)
     agent_use_item(direction="forward", item_names=["ladder"])
