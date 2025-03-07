@@ -362,10 +362,7 @@ def branch_mining() -> bool:
         agent.say("高さが間違っています")
         return False
     for step in range(1, length):
-        if agent.detect("forward"):
-            agent.destroy("forward")
-            agent.collect()
-        agent.move("forward")
+        agent_move("forward", 1, True)
         agent.say(f"Branch_mining : {step}/{length} {agent.position}")
         if is_mining_position():
             if agent.detect("right"):
