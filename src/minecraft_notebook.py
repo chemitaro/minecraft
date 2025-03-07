@@ -283,18 +283,19 @@ def is_mining_position() -> bool:
 def explore_and_mine_resources(
     block_name_pattern: Union[str, re.Pattern],
     mehtod: bool = True,
-    first_directions: List[str] = ["up", "left", "right", "back", "forward", "down"],
+    first_directions: List[str] = ["up", "left", "back", "right", "forward", "down"],
+    depth_count: int = 0,
 ) -> bool:
     """プレイヤーが探索しながら資源を検出し、自動で採掘する処理を実行する関数。"""
     result = False
     for direction in first_directions:
         if is_block_list_match_direction(direction, block_name_pattern) == mehtod:
             result = True
-            agent.say(f" -find : {agent.inspect(direction).id} at {agent.position}")
+            agent.say(f" -{depth_count} find : {agent.inspect(direction).id} at {agent.position}")
             agent_move(direction, 1, True, True)
-            explore_and_mine_resources(block_name_pattern, mehtod)
+            explore_and_mine_resources(block_name_pattern, mehtod, depth_count=depth_count + 1)
             agent_move(opposite_direction_dict[direction], 1)
-            agent.say(f" -lose : {agent.position}")
+            agent.say(f" -{depth_count} lose : {agent.position}")
     return result
 
 
