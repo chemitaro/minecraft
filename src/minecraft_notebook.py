@@ -292,6 +292,8 @@ def explore_and_mine_resources(
         if is_block_list_match_direction(direction, block_name_pattern) == mehtod:
             result = True
             agent.say(f" -{depth_count} find : {agent.inspect(direction).id} at {agent.position}")
+            agent.destroy(direction)
+            agent.collect()
             agent_move(direction, 1, True, True)
             explore_and_mine_resources(block_name_pattern, mehtod, depth_count=depth_count + 1)
             agent_move(opposite_direction_dict[direction], 1)
