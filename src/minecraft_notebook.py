@@ -13,7 +13,9 @@ normal_block_name_pattern = re.compile(
     r"^(?:cobblestone|cobbled_deepslate|deepslate|stone|netherrack|dirt|baslate|tuff|granite|andesite|blackstone)$"
 )
 liquid_block_name_pattern = re.compile(r"^(?:water|flowing_water|bubble_column|lava|flowing_lava)$")
-leave_block_name_pattern = re.compile(r"^(?:oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered)$")
+leave_block_name_pattern = re.compile(
+    r"^(?:oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered)$"
+)
 player_mention = "@yutaf "
 azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
 opposite_direction_dict = {
@@ -284,10 +286,12 @@ def explore_and_mine_resources(
     block_name_pattern: Union[str, re.Pattern],
     mehtod: bool = True,
     first_directions: List[str] = ["up", "left", "right", "back", "forward", "down"],
-) -> None:
+) -> bool:
     """プレイヤーが探索しながら資源を検出し、自動で採掘する処理を実行する関数。"""
+    result = False
     for direction in first_directions:
         if is_block_list_match_direction(direction, block_name_pattern) == mehtod:
+            result = True
             agent.say(f" -find : {agent.inspect(direction).id} at {agent.position}")
             agent.destroy(direction)
             agent.collect()
@@ -295,6 +299,7 @@ def explore_and_mine_resources(
             explore_and_mine_resources(block_name_pattern, mehtod)
             agent.move(opposite_direction_dict[direction])
             agent.say(f" -lose : {agent.position}")
+    return result
 
 
 # # 指定した方角のブロックを検出したら、そのブロックを破壊して、そのブロックを採掘する
