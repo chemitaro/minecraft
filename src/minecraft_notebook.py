@@ -12,7 +12,7 @@ ignore_block_name_pattern = re.compile(
 normal_block_name_pattern = re.compile(
     r"^(?:cobblestone|cobbled_deepslate|deepslate|stone|netherrack|dirt|baslate|tuff|granite|andesite|blackstone)$"
 )
-liquid_block_name_pattern = re.compile(r"^(?:water|flowing_water|lava|flowing_lava)$")
+liquid_block_name_pattern = re.compile(r"^(?:water|flowing_water|bubble_column|lava|flowing_lava)$")
 leave_block_name_pattern = re.compile(r"^(?:oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered)$")
 player_mention = "@yutaf "
 azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
