@@ -400,7 +400,9 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         elif command == "warp":
             safe_teleport([int(chunked_messages[1]), int(chunked_messages[2]), int(chunked_messages[3])])
         elif command == "branch_mining":
-            branch_mining()
+            running = True
+            while running:
+                running = branch_mining()
         elif command == "mining":
             mining(int(chunked_messages[1]), "manual")
         elif command == "turn":
