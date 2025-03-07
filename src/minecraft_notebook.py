@@ -295,8 +295,11 @@ def explore_and_mine_resources(
             agent.destroy(direction)
             agent.collect()
             agent_move(direction, 1, True, True)
-            explore_and_mine_resources(block_name_pattern, mehtod, depth_count=depth_count + 1)
-            agent_move(opposite_direction_dict[direction], 1)
+            if depth_count < 700:
+                explore_and_mine_resources(block_name_pattern, mehtod, depth_count=depth_count + 1)
+            else:
+                agent.say(f" -{depth_count} : max depth")
+            agent_move(opposite_direction_dict[direction], 1, True, True)
             agent.say(f" -{depth_count} lose : {agent.position}")
     return result
 
