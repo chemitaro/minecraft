@@ -363,11 +363,8 @@ def mining(depth: int, line_number: str = "none") -> None:
     start_position = [agent.position.x, agent.position.y, agent.position.z]
     for step in range(1, depth):
         agent.say(f"Mining : {line_number} - {step}/{depth}")
-        if agent.detect("forward"):
-            agent.destroy("forward")
-            agent.collect()
-            explore_and_mine_resources(ignore_block_name_pattern, False, ["up", "left", "right", "down"])
-        agent.move("forward")
+        agent_move("forward", count=1, is_destroy=True, is_collect=True)
+        explore_and_mine_resources(ignore_block_name_pattern, False, ["up", "left", "right", "down"])
     agent.say("Return...")
     safe_teleport(start_position)
     agent.say("Mining : finish")
