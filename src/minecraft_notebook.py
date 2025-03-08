@@ -106,7 +106,6 @@ def agent_move(direction: str, count: int = 1, is_destroy: bool = False, is_coll
     for i in range(count):
         retry_count = 3
         while is_destroy and agent.detect(direction):
-            agent.say(f"destroy : {agent.inspect(direction).id}")
             agent.destroy(direction)
             retry_count -= 1
             if retry_count < 0:
@@ -118,6 +117,7 @@ def agent_move(direction: str, count: int = 1, is_destroy: bool = False, is_coll
                 for other_direction in other_directions:
                     agent_move(other_direction, count=1, is_destroy=True, is_collect=is_collect)
                     for destroy_direction in six_directions:
+                        agent.say(f"destroy : {agent.inspect(destroy_direction).id}")
                         agent.destroy(destroy_direction)
                     agent_move(
                         opposite_direction_dict[other_direction], count=1, is_destroy=True, is_collect=is_collect
