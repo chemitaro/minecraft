@@ -105,6 +105,7 @@ def agent_turn(direction: str, count: int = 1) -> None:
 def agent_move(direction: str, count: int = 1, is_destroy: bool = False, is_collect: bool = False) -> None:
     for i in range(count):
         while is_destroy and agent.detect(direction):
+            agent.say(f"destroy : {agent.inspect(direction).id}")
             agent.destroy(direction)
         if is_collect:
             agent.collect()
@@ -291,16 +292,16 @@ def explore_and_mine_resources(
     for direction in first_directions:
         if is_block_list_match_direction(direction, block_name_pattern) == mehtod:
             result = True
-            agent.say(f" -{limit} find : {agent.inspect(direction).id} at {agent.position}")
+            agent.say(f" {limit} find : {agent.inspect(direction).id} at {agent.position}")
             agent.destroy(direction)
             agent.collect()
             agent_move(direction, 1, True, True)
             if limit < 700:
                 explore_and_mine_resources(block_name_pattern, mehtod, limit=limit + 1)
             else:
-                agent.say(f" -{limit} : limit over")
+                agent.say(f" {limit} : limit over")
             agent_move(opposite_direction_dict[direction], 1, True, True)
-            agent.say(f" -{limit} lose : {agent.position}")
+            agent.say(f" {limit} lose : {agent.position}")
     return result
 
 
