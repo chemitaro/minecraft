@@ -104,9 +104,26 @@ def agent_turn(direction: str, count: int = 1) -> None:
 
 def agent_move(direction: str, count: int = 1, is_destroy: bool = False, is_collect: bool = False) -> None:
     for i in range(count):
+        retry_count = 3
         while is_destroy and agent.detect(direction):
             agent.say(f"destroy : {agent.inspect(direction).id}")
             agent.destroy(direction)
+            retry_count -= 1
+            if retry_count < 0:
+                agent.say(f"destroy : {agent.inspect(direction).id} failed")
+                # 周囲のブロックを破壊する
+                six_directions = ["forward", "back", "left", "right", "up", "down"]
+                # 進行方向ではない方角のリストを作成
+                other_directions = [d for d in six_directions if d != direction]
+                for other_direction in other_directions:
+                    agent_move(other_direction, count=1, is_destroy=True, is_collect=is_collect)
+                    for destroy_direction in six_directions:
+                        agent.destroy(destroy_direction)
+                    agent_move(
+                        opposite_direction_dict[other_direction], count=1, is_destroy=True, is_collect=is_collect
+                    )
+                # ループの最初に戻る
+                continue
         if is_collect:
             agent.collect()
         agent.move(direction)
@@ -392,7 +409,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
             # build_space(2, 3, 50, l=True, r=True, u=True, d=True, f=True, safe=True)
-            detect_and_destroy_block("forward")
+            agent_move("forward", count=100, is_destroy=True, is_collect=True)
             agent.say("trial finish")
         elif command == "switch":
             switch_world_type()
