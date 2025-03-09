@@ -234,6 +234,7 @@ def build_space(
             if u:
                 agent_put_block("up")
             for h in range(height):
+                agent.say(f"build_space : {w}/{width}, {h}/{height}, {dep}/{depth}")
                 if safe or (f and d == depth - 1):
                     agent_put_block("forward")
                 if l and w == 0:
