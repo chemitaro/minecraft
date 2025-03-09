@@ -85,36 +85,34 @@ def show_agent_location() -> None:
 def safe_teleport(position: List) -> None:
     """多段階で移動する安全なテレポート"""
     step_length = current_world_enum.value.teleport_step_length
-    start_x = agent.position.x
-    start_z = agent.position.z
     goal_x = position[0]
     goal_z = position[2]
-    distance_x = goal_x - start_x
-    distance_z = goal_z - start_z
-    move_sign_x = 1 if distance_x > 0 else -1
-    move_sign_z = 1 if distance_z > 0 else -1
     current_x = agent.position.x
     current_z = agent.position.z
     current_distance_x = goal_x - current_x
     current_distance_z = goal_z - current_z
+    move_sign_x = 1 if current_distance_x > 0 else -1
+    move_sign_z = 1 if current_distance_z > 0 else -1
 
-    while abs(current_distance_x) > step_length and abs(current_distance_z) > step_length:
+    while abs(current_distance_x) > step_length or abs(current_distance_z) > step_length:
         if abs(current_distance_x) > step_length:
             next_x = current_x + step_length * move_sign_x
         else:
             next_x = current_x
-        if abs(distance_z) > step_length:
+
+        if abs(current_distance_z) > step_length:
             next_z = current_z + step_length * move_sign_z
         else:
             next_z = current_z
         agent.teleport([next_x, agent.position.y, next_z])
-        agent.say(f"teleport: {agent.position}")
-        current_x = agent.position.x
-        current_z = agent.position.z
+        agent.say(f"teleport_step: {agent.position}")
+
+        current_x = next_x
+        current_z = next_z
         current_distance_x = goal_x - current_x
         current_distance_z = goal_z - current_z
     agent.teleport(position)
-    agent.say(f"safe_teleport: finish - {agent.position}")
+    agent.say(f"teleport: finish - {agent.position}")
 
 
 def agent_turn(direction: str, count: int = 1) -> None:
