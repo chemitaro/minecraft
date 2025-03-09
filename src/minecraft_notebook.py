@@ -229,12 +229,17 @@ def build_space(
     ],
 ) -> None:
     agent_move("up", height - 1, True, True)  # 開始ポジションに移動（左上）
+    total_count = width * height * depth
+    success_count = 0
     for dep in range(depth):
         for w in range(width):
             if u:
                 agent_put_block("up")
             for h in range(height):
-                agent.say(f"build_space : {w}/{width}, {h}/{height}, {dep}/{depth}")
+                success_count += 1
+                agent.say(
+                    f"success: {format(success_count/total_count*100, '.2f')}%, w: {w}/{width}, h: {h}/{height}, d: {dep}/{depth}"
+                )
                 if safe or (f and d == depth - 1):
                     agent_put_block("forward")
                 if l and w == 0:
