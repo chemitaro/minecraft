@@ -4,7 +4,7 @@ import re
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 ignore_block_name_pattern = re.compile(
     r"^(?:air|deepslate|stone|netherrack|water|flowing_water|bubble_column|lava|flowing_lava|fire|dirt|diorite|baslate|tuff|granite|andesite|gravel|blackstone|grass_block|farmland|grass_path|podzol|mycelium|mud|short_grass|tall_grass|seagrass|oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered|bedrock)$"
@@ -15,6 +15,9 @@ normal_block_name_pattern = re.compile(
 liquid_block_name_pattern = re.compile(r"^(?:water|flowing_water|bubble_column|lava|flowing_lava)$")
 leave_block_name_pattern = re.compile(
     r"^(?:oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered)$"
+)
+notify_block_name_pattern = re.compile(
+    r"^(?:vault|trial_spawner|chiseled_stone_bricks|chiseled_stone_bricks|lodestone|copper_block|exposed_copper|weathered_copper|oxidized_copper|waxed_copper|waxed_exposed_copper|waxed_weathered_copper|waxed_oxidized_copper|stone_bricks|tuff_bricks|chiseled_tuff|chiseled_tuff_bricks|chiseled_sandstone|chiseled_sandstone)$"
 )
 player_mention = "@yutaf "
 azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
@@ -34,6 +37,7 @@ orthogonal_directions_dict = {
     "up": ["forward", "back", "left", "right"],
     "down": ["forward", "back", "left", "right"],
 }
+
 
 @dataclass
 class WorldType:
@@ -119,7 +123,7 @@ def safe_teleport(position: List) -> None:
         current_distance_x = goal_x - current_x
         current_distance_z = goal_z - current_z
     agent.teleport(position)
-    agent.say(f"teleport: finish - {agent.position}")
+    agent.say(f"teleport: finish {agent.position}")
 
 
 def agent_turn(direction: str, count: int = 1) -> None:
@@ -335,24 +339,26 @@ def is_mining_position() -> bool:
 def explore_and_mine_resources(
     block_name_pattern: Union[str, re.Pattern],
     mehtod: bool = True,
+    notify_block_name_pattern: List[Union[str, re.Pattern]] = [],
     first_directions: List[str] = ["up", "left", "back", "right", "forward", "down"],
     count: int = 0,
 ) -> bool:
     """プレイヤーが探索しながら資源を検出し、自動で採掘する処理を実行する関数。"""
-    result = False
+    result: bool
     for direction in first_directions:
         if is_block_list_match_direction(direction, block_name_pattern) == mehtod:
-            result = True
-            agent.say(f" {count} find : {agent.inspect(direction).id} at {agent.position}")
+            agent.say(f" {count} find : {agent.inspect(direction).id} {agent.position}")
             agent.destroy(direction)
             agent.collect()
             agent_move(direction, 1, True, True)
             if count < 700:
-                explore_and_mine_resources(block_name_pattern, mehtod, count=count + 1)
+                result = explore_and_mine_resources(block_name_pattern, mehtod, count=count + 1)
             else:
                 agent.say(f" {count} : limit over")
             agent_move(opposite_direction_dict[direction], 1, True, True)
             agent.say(f" {count} lose : {agent.position}")
+        else:
+            result = True
     return result
 
 
@@ -392,7 +398,7 @@ def walk_along_the_terrain(step: int = 1, explore: bool = False) -> None:
             check_and_clear_agent_inventory()
 
 
-def mining(depth: int, line_number: str = "none") -> None:
+def mining(depth: int, line_number: str = "none") -> Tuple[bool, List[int]]:
     """資源を収集しながら掘り進める"""
     start_position = [agent.position.x, agent.position.y, agent.position.z]
     for step in range(1, depth):
@@ -402,6 +408,7 @@ def mining(depth: int, line_number: str = "none") -> None:
     agent.say("Return...")
     safe_teleport(start_position)
     agent.say("Mining : finish")
+    return True, []
 
 
 def branch_mining() -> bool:
