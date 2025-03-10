@@ -314,12 +314,15 @@ def generate_flint() -> None:
 
 def is_mining_position() -> bool:
     """指定された位置情報がマイニング対象のポジションであるかどうかを判定し、結果をブール値（True/False）で返却します。"""
-    return (
-        int(agent.position.y) % 8 == 0
-        and int(agent.position.x) % 4 == 0
-        or int(agent.position.y) % 4 == 0
-        and (int(agent.position.x) + 2) % 4 == 0
-    )
+    # 高さが８の倍数の場合
+    if int(agent.position.y) % 8 == 0:
+        if int(agent.position.x) % 4 == 0:
+            return True
+    # 高さが４の倍数の場合
+    elif int(agent.position.y) % 4 == 0:
+        if (int(agent.position.x) + 2) % 4 == 0:
+            return True
+    return False
 
 
 def explore_and_mine_resources(
