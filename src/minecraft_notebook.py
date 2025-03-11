@@ -17,7 +17,7 @@ leave_block_name_pattern = re.compile(
     r"^(?:oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered)$"
 )
 notify_block_name_pattern = re.compile(
-    r"^(?:vault|trial_spawner|chiseled_stone_bricks|chiseled_stone_bricks|lodestone|copper_block|exposed_copper|weathered_copper|oxidized_copper|waxed_copper|waxed_exposed_copper|waxed_weathered_copper|waxed_oxidized_copper|stone_bricks|tuff_bricks|chiseled_tuff|chiseled_tuff_bricks|chiseled_sandstone|chiseled_sandstone)$"
+    r"^(?:end_portal_frame|vault|trial_spawner|mob_spawner|sculk_sensor|chiseled_stone_bricks|stone_bricks|mossy_stone_bricks|infested_stone|infested_cobblestone|infested_stone_bricks|infested_mossy_stone_bricks|infested_cracked_stone_bricks|infested_chiseled_stone_bricks|infested_deepslate|lodestone|polished_deepslate|deepslate_bricks|deepslate_tiles|chiseled_deepslate|cracked_deepslate_bricks|cracked_deepslate_tiles|cobbled_deepslate_double_slab|cobbled_deepslate_slab|cobbled_deepslate_stairs|polished_deepslate_double_slab|polished_deepslate_slab|polished_deepslate_stairs|deepslate_brick_double_slab|deepslate_brick_slab|deepslate_brick_stairs|deepslate_tile_double_slab|deepslate_tile_slab|deepslate_tile_stairs|reinforced_deepslate|stone_bricks|tuff_bricks|chiseled_tuff|chiseled_tuff_bricks|chiseled_sandstone|chiseled_sandstone|copper_block|exposed_copper|weathered_copper|oxidized_copper|waxed_copper|waxed_exposed_copper|waxed_weathered_copper|waxed_oxidized_copper)$"
 )
 player_mention = "@yutaf "
 azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
