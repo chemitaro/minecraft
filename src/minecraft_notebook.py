@@ -4,7 +4,7 @@ import re
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 ignore_block_name_pattern = re.compile(
     r"^(?:air|deepslate|stone|netherrack|water|flowing_water|bubble_column|lava|flowing_lava|fire|dirt|diorite|baslate|tuff|granite|andesite|gravel|blackstone|grass_block|farmland|grass_path|podzol|mycelium|mud|short_grass|tall_grass|seagrass|oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered|bedrock)$"
@@ -37,6 +37,19 @@ orthogonal_directions_dict = {
     "up": ["forward", "back", "left", "right"],
     "down": ["forward", "back", "left", "right"],
 }
+
+
+# 発見したnotify_blockの名前と座標
+@dataclass
+class NotifyBlock:
+    name: str
+    position: List[int]
+
+    def __str__(self) -> str:
+        return f"{self.name} : {self.position}"
+
+
+notify_block_list: List[NotifyBlock] = []
 
 
 @dataclass
@@ -357,20 +370,25 @@ def is_mining_position() -> bool:
 def explore_and_mine_resources(
     block_name_pattern: Union[str, re.Pattern],
     mehtod: bool = True,
-    notify_block_name_pattern: List[Union[str, re.Pattern]] = [],
     first_directions: List[str] = ["up", "left", "back", "right", "forward", "down"],
     count: int = 0,
+    notify: bool = False,
 ) -> bool:
     """プレイヤーが探索しながら資源を検出し、自動で採掘する処理を実行する関数。"""
     result: bool
+    global notify_block_list
     for direction in first_directions:
         if is_block_list_match_direction(direction, block_name_pattern) == mehtod:
             agent.say(f" {count} find : {agent.inspect(direction).id} {agent.position}")
-            agent.destroy(direction)
-            agent.collect()
+            if notify and is_block_list_match_direction(direction, notify_block_name_pattern):
+                agent.say(f"notify : {agent.inspect(direction).id} {agent.position}")
+                notify_block_list.append(NotifyBlock(agent.inspect(direction).id, agent.position))
+                return False
             agent_move(direction, 1, True, True)
             if count < 700:
-                result = explore_and_mine_resources(block_name_pattern, mehtod, count=count + 1)
+                result = explore_and_mine_resources(block_name_pattern, mehtod, count=count + 1, notify=notify)
+                if result is False:
+                    return False
             else:
                 agent.say(f" {count} : limit over")
             agent_move(opposite_direction_dict[direction], 1, True, True)
@@ -412,21 +430,37 @@ def walk_along_the_terrain(step: int = 1, explore: bool = False) -> None:
         climb_up(explore)
         agent.move("forward")
         if explore:
-            explore_and_mine_resources(ignore_block_name_pattern, False, ["up", "left", "right", "down"])
+            explore_and_mine_resources(
+                block_name_pattern=ignore_block_name_pattern,
+                mehtod=False,
+                first_directions=["up", "left", "right", "down"],
+            )
             check_and_clear_agent_inventory()
 
 
-def mining(depth: int, line_number: str = "none") -> Tuple[bool, List[int]]:
+def mining(depth: int, line_number: str = "none") -> bool:
     """資源を収集しながら掘り進める"""
     start_position = [agent.position.x, agent.position.y, agent.position.z]
+    explore_result = True
     for step in range(1, depth):
         agent.say(f"Mining : {line_number} - {step}/{depth}")
+        for notify_block in notify_block_list:
+            agent.say(f"notify_block : {str(notify_block)}")
         agent_move("forward", count=1, is_destroy=True, is_collect=True)
-        explore_and_mine_resources(ignore_block_name_pattern, False, ["up", "left", "right", "down"])
+        explore_result = explore_and_mine_resources(
+            block_name_pattern=ignore_block_name_pattern,
+            mehtod=False,
+            first_directions=["up", "left", "right", "down"],
+            notify=True,
+        )
+        if explore_result is False:
+            break
     agent.say("Return...")
     safe_teleport(start_position)
     agent.say("Mining : finish")
-    return True, []
+    for notify_block in notify_block_list:
+        agent.say(f"notify_block : {str(notify_block)}")
+    return explore_result
 
 
 def branch_mining() -> bool:
@@ -438,21 +472,25 @@ def branch_mining() -> bool:
         agent.say("高さが間違っています")
         return False
     for step in range(1, length):
-        agent_move("forward", 1, True)
-        agent.say(f"Branch_mining : {step}/{length} {agent.position}")
-        if is_mining_position():
-            if agent.detect("right"):
-                agent.turn("right")
-                mining(500, f"{step}R")
-                agent_item_delivery()
-                time.sleep(1)
-                agent.turn("left")
-            if agent.detect("left"):
-                agent.turn("left")
-                mining(500, f"{step}L")
-                agent_item_delivery()
-                time.sleep(1)
-                agent.turn("right")
+        agent_move("forward", 1, True, True)
+        if agent.detect("forward"):
+            agent.say(f"Branch_mining : {step}/{length} {agent.position}")
+            if is_mining_position():
+                if agent.detect("right"):
+                    agent.turn("right")
+                    mining(500, f"{step}R")
+                    agent_item_delivery()
+                    time.sleep(1)
+                    agent.turn("left")
+                if agent.detect("left"):
+                    agent.turn("left")
+                    mining(500, f"{step}L")
+                    agent_item_delivery()
+                    time.sleep(1)
+                    agent.turn("right")
+        else:
+            # 採掘済み
+            agent.say(f"Already mined : {step}/{length}")
     return True
 
 
@@ -465,7 +503,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
             # build_space(2, 3, 50, l=True, r=True, u=True, d=True, f=True, safe=True)
-            agent_move("forward", count=100, is_destroy=True, is_collect=True)
+            agent.say(is_block_list_match_direction("forward", notify_block_name_pattern))
             agent.say("trial finish")
         elif command == "switch":
             switch_world_type()
