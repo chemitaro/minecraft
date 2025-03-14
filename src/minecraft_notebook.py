@@ -384,6 +384,8 @@ def explore_and_mine_resources(
                 agent.say(f"notify : {agent.inspect(direction).id} {agent.position}")
                 notify_block_list.append(NotifyBlock(agent.inspect(direction).id, agent.position))
                 return False
+            agent.destroy(direction)
+            agent.collect()
             agent_move(direction, 1, True, True)
             if count < 700:
                 result = explore_and_mine_resources(block_name_pattern, mehtod, count=count + 1, notify=notify)
@@ -401,9 +403,9 @@ def explore_and_mine_resources(
 # # 指定した方角のブロックを検出したら、そのブロックを破壊して、そのブロックを採掘する
 def detect_and_destroy_block(direction: Optional[str] = None) -> None:
     if direction is None or agent.inspect(direction).id == "air":
-        explore_and_mine_resources(ignore_block_name_pattern, False)
+        explore_and_mine_resources(block_name_pattern=ignore_block_name_pattern, mehtod=False)
     else:
-        explore_and_mine_resources(agent.inspect(direction).id)
+        explore_and_mine_resources(block_name_pattern=agent.inspect(direction).id)
 
 
 def fall_down(explore: bool = False) -> None:
