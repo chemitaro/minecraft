@@ -167,6 +167,7 @@ def agent_move(direction: str, count: int = 1, is_destroy: bool = False, is_coll
             retry_count -= 1
             if retry_count < 0:
                 agent.say(f"destroy : {agent.inspect(direction).id} failed")
+                show_agent_location()
                 # 周囲のブロックを破壊する
                 six_directions = ["forward", "back", "left", "right", "up", "down"]
                 # 進行方向ではない方角のリストを作成
