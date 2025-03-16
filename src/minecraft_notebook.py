@@ -17,7 +17,7 @@ leave_block_name_pattern = re.compile(
     r"^(?:oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered)$"
 )
 notify_block_name_pattern = re.compile(
-    r"^(?:end_portal_frame|vault|trial_spawner|mob_spawner|sculk_sensor|suspicious_sand|suspicious_gravel|chiseled_stone_bricks|stone_bricks|mossy_stone_bricks|infested_stone|infested_cobblestone|infested_stone_bricks|infested_mossy_stone_bricks|infested_cracked_stone_bricks|infested_chiseled_stone_bricks|infested_deepslate|lodestone|polished_deepslate|deepslate_bricks|deepslate_tiles|chiseled_deepslate|cracked_deepslate_bricks|cracked_deepslate_tiles|cobbled_deepslate_double_slab|cobbled_deepslate_slab|cobbled_deepslate_stairs|polished_deepslate_double_slab|polished_deepslate_slab|polished_deepslate_stairs|deepslate_brick_double_slab|deepslate_brick_slab|deepslate_brick_stairs|deepslate_tile_double_slab|deepslate_tile_slab|deepslate_tile_stairs|reinforced_deepslate|stone_bricks|tuff_bricks|chiseled_tuff|chiseled_tuff_bricks|chiseled_sandstone|chiseled_sandstone|nether_brick|polished_blackstone_bricks|cracked_polished_blackstone_bricks|chiseled_polished_blackstone|gold_block|quartz_block|gilded_blackstone|polished_blackstone|purpur_block|purpur_pillar|end_bricks|copper_block|exposed_copper|weathered_copper|oxidized_copper|waxed_copper|waxed_exposed_copper|waxed_weathered_copper|waxed_oxidized_copper|cut_copper|exposed_cut_copper|weathered_cut_copper|oxidized_cut_copper|waxed_cut_copper|waxed_exposed_cut_copper|waxed_weathered_cut_copper|waxed_oxidized_cut_copper|copper_grate|exposed_copper_grate|weathered_copper_grate|oxidized_copper_grate|waxed_copper_grate|waxed_exposed_copper_grate|waxed_weathered_copper_grate|waxed_oxidized_copper_grate|prismarine)$"
+    r"^(?:end_portal_frame|vault|trial_spawner|mob_spawner|suspicious_sand|suspicious_gravel|sculk|sculk_vein|sculk_sensor|sculk_catalyst|sculk_shrieker|oak_planks|spruce_planks|birch_planks|jungle_planks|acacia_planks|dark_oak_planks|mangrove_planks|cherry_planks|pale_oak_planks|bamboo_planks|crimson_planks|warped_planks|oak_fence|spruce_fence|birch_fence|jungle_fence|acacia_fence|dark_oak_fence|mangrove_fence|cherry_fence|pale_oak_fence|bamboo_fence|crimson_fence|warped_fence|chiseled_stone_bricks|stone_bricks|mossy_stone_bricks|infested_stone|infested_cobblestone|infested_stone_bricks|infested_mossy_stone_bricks|infested_cracked_stone_bricks|infested_chiseled_stone_bricks|infested_deepslate|lodestone|polished_deepslate|deepslate_bricks|deepslate_tiles|chiseled_deepslate|cracked_deepslate_bricks|cracked_deepslate_tiles|cobbled_deepslate_double_slab|cobbled_deepslate_slab|cobbled_deepslate_stairs|polished_deepslate_double_slab|polished_deepslate_slab|polished_deepslate_stairs|deepslate_brick_double_slab|deepslate_brick_slab|deepslate_brick_stairs|deepslate_tile_double_slab|deepslate_tile_slab|deepslate_tile_stairs|reinforced_deepslate|stone_bricks|tuff_bricks|chiseled_tuff|chiseled_tuff_bricks|chiseled_sandstone|chiseled_sandstone|nether_brick|polished_blackstone_bricks|cracked_polished_blackstone_bricks|chiseled_polished_blackstone|gold_block|quartz_block|gilded_blackstone|polished_blackstone|purpur_block|purpur_pillar|end_bricks|copper_block|exposed_copper|weathered_copper|oxidized_copper|waxed_copper|waxed_exposed_copper|waxed_weathered_copper|waxed_oxidized_copper|cut_copper|exposed_cut_copper|weathered_cut_copper|oxidized_cut_copper|waxed_cut_copper|waxed_exposed_cut_copper|waxed_weathered_cut_copper|waxed_oxidized_cut_copper|copper_grate|exposed_copper_grate|weathered_copper_grate|oxidized_copper_grate|waxed_copper_grate|waxed_exposed_copper_grate|waxed_weathered_copper_grate|waxed_oxidized_copper_grate|prismarine)$"
 )
 player_mention = "@yutaf "
 azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
@@ -171,8 +171,8 @@ def agent_move(direction: str, count: int = 1, is_destroy: bool = False, is_coll
                 # 周囲のブロックを破壊する
                 six_directions = ["forward", "back", "left", "right", "up", "down"]
                 # 進行方向ではない方角のリストを作成
-                other_directions = [d for d in six_directions if d != direction]
-                for other_direction in other_directions:
+                for other_direction in orthogonal_directions_dict[direction]:
+                    agent.destroy(other_direction)
                     agent_move(other_direction, count=1, is_destroy=True, is_collect=is_collect)
                     for destroy_direction in six_directions:
                         agent.say(f"destroy : {agent.inspect(destroy_direction).id}")
@@ -324,6 +324,7 @@ def build_space(
 
 def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> bool:
     for i in range(step):
+        agent.say(f"build_ladder : {i}/{step} {agent.position}")
         if (
             agent.inspect(direction).id == "bedrock"
             or agent.position.y >= current_world_enum.value.max_y
@@ -336,7 +337,7 @@ def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> bool:
             agent_put_block(direction="left")
             agent_put_block(direction="right")
             agent_put_block(direction="back")
-            agent_put_block(direction=opposite_direction_dict[direction])
+            agent_put_block(direction=direction)
         agent_move(direction=opposite_direction_dict[direction], is_destroy=True, is_collect=True)
         agent_use_item(direction="forward", item_names=["ladder"])
         agent_move(direction=direction)
