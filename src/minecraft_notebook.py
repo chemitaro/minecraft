@@ -279,6 +279,16 @@ def block_liquid() -> bool:
     return is_block_liquid
 
 
+# 高速に通路を掘る
+def fast_dig(count: int = 1) -> None:
+    for i in range(count):
+        if agent.detect("forward"):
+            agent.destroy("forward")
+        agent.move("forward")
+        if agent.detect("up"):
+            agent.destroy("up")
+
+
 def build_space(
     width: int,
     height: int,
@@ -593,6 +603,8 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
                 safe=("safe" in chunked_messages),
                 water=("water" in chunked_messages),
             )
+        elif command == "fast_dig":
+            fast_dig(int(chunked_messages[1]))
         elif command == "ladder":
             build_ladder(
                 direction=chunked_messages[1], step=int(chunked_messages[2]), safe=("safe" in chunked_messages)
