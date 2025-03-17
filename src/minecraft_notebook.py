@@ -268,6 +268,17 @@ def agent_put_block(
     return agent_use_item(direction, block_names)
 
 
+def block_liquid() -> bool:
+    is_block_liquid = False
+    for direction in ["up", "down", "left", "right", "forward", "back"]:
+        if is_block_list_match_direction(direction, liquid_block_name_pattern):
+            agent_put_block(
+                direction,
+            )
+            is_block_liquid = True
+    return is_block_liquid
+
+
 def build_space(
     width: int,
     height: int,
@@ -280,6 +291,7 @@ def build_space(
     u: bool = False,
     d: bool = False,
     safe: bool = False,
+    water: bool = False,
     block_names: List[Union[str, re.Pattern]] = [
         re.compile(r"^(?:cobblestone|cobbled_deepslate|)$"),
         re.compile(r"^(?:deepslate|stone|dirt|diorite|baslate|tuff|granite|andesite|blackstone)$"),
@@ -308,14 +320,30 @@ def build_space(
                     agent_put_block("back")
                 if h < height - 1:
                     agent_move("down", 1, True, True)
+                    if water:
+                        block_liquid()
             if d:
                 agent_put_block("down")
-            agent_move("up", height - 1, True, True)
+
+            if water:
+                for i in range(height - 1):
+                    if agent.detect("back"):
+                        agent.destroy("back")
+                    agent_move(direction="up", count=1, is_destroy=True, is_collect=True)
+                if agent.detect("back"):
+                    agent.destroy("back")
+            else:
+                agent_move("up", height - 1, True, True)
+
             if w < width - 1:
                 agent_move("right", 1, True, True)
+                if water:
+                    block_liquid()
         agent_move("left", width - 1, True, True)
         if dep < depth - 1:
             agent_move("forward", 1, True, True)
+            if water:
+                block_liquid()
     agent_move("down", height - 1, True, True)
 
 
@@ -563,6 +591,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
                 d=("d" in chunked_messages),
                 f=("f" in chunked_messages),
                 safe=("safe" in chunked_messages),
+                water=("water" in chunked_messages),
             )
         elif command == "ladder":
             build_ladder(
