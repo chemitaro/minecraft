@@ -396,8 +396,8 @@ def fast_dig(count: int = 1) -> None:
         if agent.detect("up"):
             agent.destroy("up")
         agent.collect()
-        if is_block_list_match_direction("forward", liquid_block_name_pattern):
-            build_space(width=1, height=2, depth=2, d=True, water=True)
+        if is_block_list_match_direction("forward", liquid_block_name_pattern) or is_block_list_match_direction("up", liquid_block_name_pattern):
+            build_space(width=1, height=2, depth=10, d=True, water=True)
         if agent.detect("down") is False:
             agent_put_block("down")
         else:
