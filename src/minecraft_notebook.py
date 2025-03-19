@@ -143,6 +143,7 @@ def safe_teleport(position: List) -> None:
             next_z = current_z
         agent.say(f"teleport_to: {next_x}, {next_y}, {next_z}")
         agent.teleport([next_x, next_y, next_z])
+        time.sleep(5)
 
         current_x = next_x
         current_y = next_y
