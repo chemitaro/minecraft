@@ -220,14 +220,33 @@ def agent_teleport_player() -> None:
     agent.teleport(["~0", "~0", "~0"])
 
 
-def is_block_list_match_direction(direction: str, block_name_pattern: Union[str, re.Pattern]) -> bool:
-    """指定された方向において、ブロックのリストが所定のパターンにマッチするかを判定し、結果をブール値（True/False）で返却します。"""
+def is_block_list_match_direction(
+    direction: str, block_name_pattern: Union[str, re.Pattern], data: Optional[int] = None
+) -> bool:
+    """指定された方向において、ブロックのリストが所定のパターンにマッチするかを判定し、結果をブール値（True/False）で返却します。
+    また、dataパラメータが指定されている場合は、ブロックのdata値も一致するかを判定します。"""
+    block = agent.inspect(direction)
+    agent.say(f"block: {direction} {block.id} {block.data}")
+
+    # ブロック名のパターンマッチングを確認
+    pattern_match = False
     if isinstance(block_name_pattern, str):
-        return bool(fnmatch.fnmatch(agent.inspect(direction).id, block_name_pattern))
+        pattern_match = bool(fnmatch.fnmatch(block.id, block_name_pattern))
     elif isinstance(block_name_pattern, re.Pattern):
-        return bool(block_name_pattern.match(agent.inspect(direction).id))
+        pattern_match = bool(block_name_pattern.match(block.id))
     else:
         raise ValueError("block_name_pattern must be a string or a re.Pattern")
+
+    # パターンがマッチしなければFalseを返す
+    if not pattern_match:
+        return False
+
+    # dataパラメータが指定されている場合は、data値も一致するか確認
+    if data is not None and block.data != data:
+        return False
+
+    # すべての条件を満たした場合はTrueを返す
+    return True
 
 
 def get_agent_storage_socket_index(items: List[Union[str, re.Pattern]]) -> int:
@@ -268,25 +287,22 @@ def agent_put_block(
     return agent_use_item(direction, block_names)
 
 
-def block_liquid() -> bool:
+def block_liquid(
+    directions: List[str] = ["forward", "up", "left", "right", "down", "back"],
+    block_name_pattern: Union[str, re.Pattern] = liquid_block_name_pattern,
+    ignore_flow: bool = False,
+) -> bool:
     is_block_liquid = False
-    for direction in ["up", "down", "left", "right", "forward", "back"]:
-        if is_block_list_match_direction(direction, liquid_block_name_pattern):
-            agent_put_block(
-                direction,
-            )
+    for direction in directions:
+        if ignore_flow and is_block_list_match_direction(
+            direction=direction, block_name_pattern=liquid_block_name_pattern, data=0
+        ):
+            agent_put_block(direction)
+            is_block_liquid = True
+        elif is_block_list_match_direction(direction=direction, block_name_pattern=block_name_pattern):
+            agent_put_block(direction)
             is_block_liquid = True
     return is_block_liquid
-
-
-# 高速に通路を掘る
-def fast_dig(count: int = 1) -> None:
-    for i in range(count):
-        if agent.detect("forward"):
-            agent.destroy("forward")
-        agent.move("forward")
-        if agent.detect("up"):
-            agent.destroy("up")
 
 
 def build_space(
@@ -331,7 +347,12 @@ def build_space(
                 if h < height - 1:
                     agent_move("down", 1, True, True)
                     if water:
-                        block_liquid()
+                        block_liquid(directions=["up", "left", "right", "down"])
+                        block_liquid(
+                            directions=["forward", "back"],
+                            block_name_pattern=re.compile(r"^(?:water|lava)$"),
+                            ignore_flow=True,
+                        )
             if d:
                 agent_put_block("down")
 
@@ -339,22 +360,48 @@ def build_space(
                 for i in range(height - 1):
                     if agent.detect("back"):
                         agent.destroy("back")
+                        agent.collect()
                     agent_move(direction="up", count=1, is_destroy=True, is_collect=True)
                 if agent.detect("back"):
                     agent.destroy("back")
+                    agent.collect()
             else:
                 agent_move("up", height - 1, True, True)
 
             if w < width - 1:
                 agent_move("right", 1, True, True)
                 if water:
-                    block_liquid()
+                    block_liquid(directions=["up", "left", "right", "down"])
+                    block_liquid(
+                        directions=["forward", "back"],
+                        block_name_pattern=re.compile(r"^(?:water|lava)$"),
+                        ignore_flow=True,
+                    )
         agent_move("left", width - 1, True, True)
         if dep < depth - 1:
             agent_move("forward", 1, True, True)
             if water:
-                block_liquid()
+                block_liquid(directions=["up", "left", "right", "down"])
+                block_liquid(
+                    directions=["forward", "back"], block_name_pattern=re.compile(r"^(?:water|lava)$"), ignore_flow=True
+                )
     agent_move("down", height - 1, True, True)
+
+
+# 高速に通路を掘る
+def fast_dig(count: int = 1) -> None:
+    for i in range(count):
+        if agent.detect("forward"):
+            agent.destroy("forward")
+        if agent.detect("up"):
+            agent.destroy("up")
+        agent.collect()
+        if is_block_list_match_direction("forward", liquid_block_name_pattern):
+            build_space(width=1, height=2, depth=2, d=True, water=True)
+        if agent.detect("down") is False:
+            agent_put_block("down")
+        else:
+            agent.move("forward")
 
 
 # def build_hole(width: int, height: int, depth: int, *, safe: bool = False) -> None:
@@ -545,7 +592,9 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
             # build_space(2, 3, 50, l=True, r=True, u=True, d=True, f=True, safe=True)
-            agent.say(is_block_list_match_direction("forward", notify_block_name_pattern))
+            agent.say(
+                is_block_list_match_direction(direction="forward", block_name_pattern=liquid_block_name_pattern, data=0)
+            )
             agent.say("trial finish")
         elif command == "switch":
             switch_world_type()
