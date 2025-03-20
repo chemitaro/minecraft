@@ -82,6 +82,15 @@ def switch_world_type() -> WorldEnum:  # Worldの種類を変更する
     return current_world_enum
 
 
+def convert_absolute_to_relative_coordinates(absolute_coordinates: List[int]) -> List[int]:
+    """絶対座標を相対座標に変換する"""
+    return [
+        absolute_coordinates[0] - int(agent.position.x),
+        absolute_coordinates[1] - int(agent.position.y),
+        absolute_coordinates[2] - int(agent.position.z),
+    ]
+
+
 def show_chunk_range() -> None:
     """現在地点のチャンクの範囲を表示する"""
     agent.say(f"Current Chunk : {int(player.position.x // 16)}, {int(player.position.z // 16)}")
@@ -227,7 +236,6 @@ def is_block_list_match_direction(
     """指定された方向において、ブロックのリストが所定のパターンにマッチするかを判定し、結果をブール値（True/False）で返却します。
     また、dataパラメータが指定されている場合は、ブロックのdata値も一致するかを判定します。"""
     block = agent.inspect(direction)
-    agent.say(f"block: {direction} {block.id} {block.data}")
 
     # ブロック名のパターンマッチングを確認
     pattern_match = False
@@ -397,7 +405,9 @@ def fast_dig(count: int = 1) -> None:
         if agent.detect("up"):
             agent.destroy("up")
         agent.collect()
-        if is_block_list_match_direction("forward", liquid_block_name_pattern) or is_block_list_match_direction("up", liquid_block_name_pattern):
+        if is_block_list_match_direction("forward", liquid_block_name_pattern) or is_block_list_match_direction(
+            "up", liquid_block_name_pattern
+        ):
             build_space(width=1, height=2, depth=10, d=True, water=True)
         if agent.detect("down") is False:
             agent_put_block("down")
