@@ -565,7 +565,7 @@ def mining(depth: int, line_number: str = "none") -> bool:
 
 def branch_mining() -> bool:
     """ブランチマイニングを実行する"""
-    length = 1000
+    length = 1598
     set_agent_azimuth(-90)  # 掘削方向の西側を向く
     show_agent_location()
     if not agent.position.y % 4 == 0:
