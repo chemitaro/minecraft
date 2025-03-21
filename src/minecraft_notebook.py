@@ -200,14 +200,14 @@ def agent_move(direction: str, count: int = 1, is_destroy: bool = False, is_coll
 def agent_item_delivery() -> None:
     """エージェントのアイテムを回収場所にドロップする"""
     before_position = agent.position
-    safe_teleport(current_world_enum.value.collection_location)
+    agent.teleport(current_world_enum.value.collection_location)
     time.sleep(0.5)
     for slot in range(1, 28):
         direction = random.choice(["forward", "back", "left", "right"])
         agent.say(f"- drop : {agent.get_item(slot).id}")
         agent.drop(direction, 64, slot)
         time.sleep(0.3)
-    safe_teleport([before_position.x, before_position.y, before_position.z])
+    agent.teleport([before_position.x, before_position.y, before_position.z])
     agent.say(f"return : {before_position}")
 
 
@@ -556,7 +556,7 @@ def mining(depth: int, line_number: str = "none") -> bool:
         if explore_result is False:
             break
     agent.say("Return...")
-    safe_teleport(start_position)
+    agent.teleport(start_position)
     agent.say("Mining : finish")
     for notify_block in notify_block_list:
         agent.say(f"notify_block : {str(notify_block)}")
@@ -614,9 +614,14 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         elif command == "warp":
             safe_teleport([int(chunked_messages[1]), int(chunked_messages[2]), int(chunked_messages[3])])
         elif command == "branch_mining":
-            running = True
-            while running:
-                running = branch_mining()
+            try:
+                agent.teleport([int(chunked_messages[1]), int(chunked_messages[2]), int(chunked_messages[3])])
+                running = True
+                while running:
+                    running = branch_mining()
+            except Exception as e:
+                agent.say(f"error : {e}")
+
         elif command == "mining":
             mining(int(chunked_messages[1]), "manual")
         elif command == "turn":
