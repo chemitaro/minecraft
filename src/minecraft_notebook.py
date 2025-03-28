@@ -63,7 +63,7 @@ class WorldType:
 
 class WorldEnum(Enum):
     OVER_WORLD = WorldType(
-        name="over_world", collection_location=[-136, 76, 1250], teleport_step_length=176, max_y=320, min_y=-60
+        name="over_world", collection_location=[-135, 73, 1243], teleport_step_length=176, max_y=320, min_y=-60
     )
     NETHER = WorldType(name="nether", collection_location=[-11, 88, 160], teleport_step_length=22, max_y=122, min_y=5)
     THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], teleport_step_length=25, max_y=122, min_y=5)
@@ -204,7 +204,8 @@ def agent_item_delivery() -> None:
     time.sleep(0.5)
     for slot in range(1, 28):
         direction = random.choice(["forward", "back", "left", "right"])
-        agent.say(f"- drop : {agent.get_item(slot).id}")
+        item = agent.get_item(slot)
+        agent.say(f"- drop {slot}/{27} : {item.id} {item.stack_size}")
         agent.drop(direction, 64, slot)
         time.sleep(0.3)
     agent.teleport([before_position.x, before_position.y, before_position.z])
@@ -643,6 +644,14 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
                 detect_and_destroy_block(chunked_messages[1])
             else:
                 detect_and_destroy_block()
+        elif command == "collect":
+            agent.collect()
+        elif command == "use":
+            agent.place(chunked_messages[1], chunked_messages[2])
+        elif command == "attack":
+            agent.attack("forward")
+        elif command == "destroy":
+            agent.destroy("forward")
         elif command == "item_list":
             show_agent_item_list()
         elif command == "what_block":
