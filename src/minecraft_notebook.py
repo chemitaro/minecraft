@@ -7,8 +7,10 @@ from enum import Enum
 from typing import List, Optional, Union
 
 ignore_block_name_pattern = re.compile(
-    r"^(?:air|deepslate|stone|netherrack|water|flowing_water|bubble_column|lava|flowing_lava|fire|dirt|diorite|baslate|tuff|granite|andesite|gravel|blackstone|grass_block|farmland|grass_path|podzol|mycelium|mud|clay|short_grass|tall_grass|seagrass|oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered|bedrock)$"
+    r"^(?:air|deepslate|stone|netherrack|water|flowing_water|bubble_column|lava|flowing_lava|fire|dirt|diorite|baslate|tuff|andesite|gravel|blackstone|grass_block|farmland|grass_path|podzol|mycelium|mud|clay|short_grass|tall_grass|seagrass|oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered|bedrock)$"
 )
+# granite除いた
+
 normal_block_name_pattern = re.compile(
     r"^(?:cobblestone|cobbled_deepslate|deepslate|stone|netherrack|dirt|baslate|tuff|granite|andesite|blackstone)$"
 )
@@ -63,7 +65,7 @@ class WorldType:
 
 class WorldEnum(Enum):
     OVER_WORLD = WorldType(
-        name="over_world", collection_location=[-135, 73, 1243], teleport_step_length=176, max_y=320, min_y=-60
+        name="over_world", collection_location=[-142, 77, 1248], teleport_step_length=176, max_y=320, min_y=-60
     )
     NETHER = WorldType(name="nether", collection_location=[-11, 88, 160], teleport_step_length=22, max_y=122, min_y=5)
     THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], teleport_step_length=25, max_y=122, min_y=5)
@@ -398,6 +400,38 @@ def build_space(
     agent_move("down", height - 1, True, True)
 
 
+# バグを発見したため、作り直す
+# def build_space_re(
+#     width: int,
+#     height: int,
+#     depth: int,
+#     *,
+#     f: bool = False,
+#     b: bool = False,
+#     l: bool = False,
+#     r: bool = False,
+#     u: bool = False,
+#     d: bool = False,
+#     safe: bool = False,
+#     water: bool = False,
+#     block_names: List[Union[str, re.Pattern]] = [
+#         re.compile(r"^(?:cobblestone|cobbled_deepslate|)$"),
+#         re.compile(r"^(?:deepslate|stone|dirt|diorite|baslate|tuff|granite|andesite|blackstone)$"),
+#         re.compile(r"^(?:netherrack)$"),
+#     ],
+# ) -> None:
+#     min_x = agent.position.x
+#     min_y = agent.position.y
+#     min_z = agent.position.z
+#     max_x = min_x + width
+#     max_y = min_y + height
+#     max_z = min_z + depth
+#     # 開始地点に移動
+#     if agent.position.y < min_y:
+#         agent_move("up", 1, True, True)
+    
+
+
 # 高速に通路を掘る
 def fast_dig(count: int = 1) -> None:
     for i in range(count):
@@ -613,7 +647,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         elif command == "come":  # エージェントを呼び出す
             agent_teleport_player()
         elif command == "warp":
-            safe_teleport([int(chunked_messages[1]), int(chunked_messages[2]), int(chunked_messages[3])])
+            agent.teleport([int(chunked_messages[1]), int(chunked_messages[2]), int(chunked_messages[3])])
         elif command == "branch_mining":
             try:
                 agent.teleport([int(chunked_messages[1]), int(chunked_messages[2]), int(chunked_messages[3])])
