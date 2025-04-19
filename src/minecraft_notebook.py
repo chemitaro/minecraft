@@ -578,8 +578,7 @@ def mining(depth: int, line_number: str = "none") -> bool:
     explore_result = True
     for step in range(1, depth):
         agent.say(f"Mining : {line_number} - {step}/{depth}")
-        for notify_block in notify_block_list:
-            agent.say(f"notify_block : {str(notify_block)}")
+        agent.say(f"notify_block : {str(notify_block_list)}")
         agent_move("forward", count=1, is_destroy=True, is_collect=True)
         explore_result = explore_and_mine_resources(
             block_name_pattern=ignore_block_name_pattern,
@@ -592,8 +591,6 @@ def mining(depth: int, line_number: str = "none") -> bool:
     agent.say("Return...")
     agent.teleport(start_position)
     agent.say("Mining : finish")
-    for notify_block in notify_block_list:
-        agent.say(f"notify_block : {str(notify_block)}")
     return explore_result
 
 
