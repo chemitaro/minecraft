@@ -540,6 +540,11 @@ def detect_and_destroy_block(direction: Optional[str] = None) -> None:
         explore_and_mine_resources(block_name_pattern=agent.inspect(direction).id)
 
 
+def display_notify_block_list() -> None:
+    for notify_block in notify_block_list:
+        agent.say(f"notify_block : {notify_block.name} {notify_block.position}")
+
+
 def fall_down(explore: bool = False) -> None:
     in_air = not agent.detect("down")
     while in_air:
@@ -578,7 +583,8 @@ def mining(depth: int, line_number: str = "none") -> bool:
     explore_result = True
     for step in range(1, depth):
         agent.say(f"Mining : {line_number} - {step}/{depth}")
-        agent.say(f"notify_block : {str(notify_block_list)}")
+        if step % 50 == 0:
+            display_notify_block_list()
         agent_move("forward", count=1, is_destroy=True, is_collect=True)
         explore_result = explore_and_mine_resources(
             block_name_pattern=ignore_block_name_pattern,
