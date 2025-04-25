@@ -204,11 +204,10 @@ def agent_item_delivery() -> None:
     agent.teleport(current_world_enum.value.collection_location)
     time.sleep(0.5)
     for slot in range(1, 28):
-        direction = random.choice(["forward", "back", "left", "right"])
+        direction = random.choice([""])
         item = agent.get_item(slot)
         agent.say(f"- drop {slot}/{27} : {item.id} {item.stack_size}")
         agent.drop(direction, 64, slot)
-        time.sleep(0.3)
     agent.teleport([before_position.x, before_position.y, before_position.z])
     agent.say(f"return : {before_position}")
 
