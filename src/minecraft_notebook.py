@@ -638,10 +638,8 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         chunked_messages = message.split()
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
-            # build_space(2, 3, 50, l=True, r=True, u=True, d=True, f=True, safe=True)
-            agent.say(
-                is_block_list_match_direction(direction="forward", block_name_pattern=liquid_block_name_pattern, data=0)
-            )
+            agent.destroy("down")
+            agent_put_block("down", block_names=["soul_sand"])
             agent.say("trial finish")
         elif command == "switch":
             switch_world_type()
