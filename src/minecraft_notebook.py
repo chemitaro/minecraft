@@ -642,7 +642,15 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         chunked_messages = message.split()
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
-            agent_move(direction="down", count=150, is_destroy=True, is_collect=True, stop_bedrock=True)
+            x = -155
+            z = 1258
+            for y in [-55, -46, -37, -28, -19, -10, -1, 8, 17, 26, 90]:
+                for step in range(4):
+                    agent.teleport([x, y, z])
+                    agent.turn("left")
+                    fast_dig(200)
+                    agent.say(f"success : {x} {y} {z}")
+                agent.say(f"finish : {y}")
             agent.say("trial finish")
         elif command == "switch":
             switch_world_type()
