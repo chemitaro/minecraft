@@ -170,8 +170,12 @@ def agent_turn(direction: str, count: int = 1) -> None:
         agent.turn(direction)
 
 
-def agent_move(direction: str, count: int = 1, is_destroy: bool = False, is_collect: bool = False) -> None:
+def agent_move(direction: str, count: int = 1, is_destroy: bool = False, is_collect: bool = False, stop_bedrock: bool = False) -> None:
     for i in range(count):
+        if stop_bedrock:
+            if agent.inspect(direction).id == "bedrock":
+                agent.say(f"stop : {agent.inspect(direction).id}")
+                return
         retry_count = 3
         while is_destroy and agent.detect(direction):
             agent.destroy(direction)
@@ -638,8 +642,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         chunked_messages = message.split()
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
-            agent.destroy("down")
-            agent_put_block("down", block_names=["soul_sand"])
+            agent_move(direction="down", count=150, is_destroy=True, is_collect=True, stop_bedrock=True)
             agent.say("trial finish")
         elif command == "switch":
             switch_world_type()
@@ -665,6 +668,8 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
                 direction=chunked_messages[1],
                 count=int(chunked_messages[2]),
                 is_destroy=("destroy" in chunked_messages),
+                is_collect=("collect" in chunked_messages),
+                stop_bedrock=("stop_bedrock" in chunked_messages),
             )
         elif command == "fall":
             fall_down()
