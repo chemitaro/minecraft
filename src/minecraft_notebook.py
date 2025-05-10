@@ -22,6 +22,7 @@ notify_block_name_pattern = re.compile(
 )
 player_mention = "@yutaf "
 azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
+azimuth_dict_reverse = {v: k for k, v in azimuth_dict.items()}
 opposite_direction_dict = {
     "forward": "back",
     "back": "forward",
@@ -221,8 +222,11 @@ def check_and_clear_agent_inventory() -> None:
         agent_item_delivery()
 
 
-def set_agent_azimuth(azimuth: int) -> bool:
+def set_agent_azimuth(azimuth: Union[int, str]) -> bool:
     """エージェントの向く方角を変える"""
+    # 文字列の場合は、azimuth_dict_reverseから取得
+    if isinstance(azimuth, str):
+        azimuth = azimuth_dict_reverse[azimuth]
     for i in range(4):
         if agent.rotation == azimuth:
             return True
@@ -642,14 +646,33 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         chunked_messages = message.split()
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
-            x = -155
-            z = 1258
-            for y in [-55, -46, -37, -28, -19, -10, -1, 8, 17, 26, 90]:
-                for step in range(4):
-                    agent.teleport([x, y, z])
-                    agent.turn("left")
+            base_x = -155
+            base_z = 1258
+            for y in [-55, -46, -37, -28, -19, -10, -1, 8, 17, 26, 35, 44]:
+                # x+100の座標から南北方向に200ブロック掘る
+                for azimuth in ["N", "S"]:
+                    agent.teleport([base_x + 100, y, base_z])
+                    set_agent_azimuth(azimuth)
                     fast_dig(200)
-                    agent.say(f"success : {x} {y} {z}")
+                    agent.say(f"finish : {base_x + 100}, {y}, {base_z} {azimuth}")
+                # x-100の座標から南北方向に200ブロック掘る
+                for azimuth in ["N", "S"]:
+                    agent.teleport([base_x - 100, y, base_z])
+                    set_agent_azimuth(azimuth)
+                    fast_dig(200)
+                    agent.say(f"finish : {base_x - 100}, {y}, {base_z} {azimuth}")
+                # z+100の座標から東西方向に200ブロック掘る
+                for azimuth in ["E", "W"]:
+                    agent.teleport([base_x, y, base_z + 100])
+                    set_agent_azimuth(azimuth)
+                    fast_dig(200)
+                    agent.say(f"finish : {base_x}, {y}, {base_z + 100} {azimuth}")
+                # z-100の座標から東西方向に200ブロック掘る
+                for azimuth in ["E", "W"]:
+                    agent.teleport([base_x, y, base_z - 100])
+                    set_agent_azimuth(azimuth)
+                    fast_dig(200)
+                    agent.say(f"finish : {base_x}, {y}, {base_z - 100} {azimuth}")
                 agent.say(f"finish : {y}")
             agent.say("trial finish")
         elif command == "switch":
