@@ -4,7 +4,7 @@ import re
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 ignore_block_name_pattern = re.compile(
     r"^(?:air|deepslate|stone|netherrack|water|flowing_water|bubble_column|lava|flowing_lava|fire|granite|dirt|diorite|baslate|tuff|andesite|gravel|blackstone|grass_block|farmland|grass_path|podzol|mycelium|mud|clay|short_grass|tall_grass|seagrass|oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered|bedrock)$"
@@ -93,6 +93,66 @@ def convert_absolute_to_relative_coordinates(absolute_coordinates: List[int]) ->
     ]
 
 
+# 始点の座標、向いている方角、横方向の移動距離、垂直方向の移動距離、奥行方向の移動距離から終点の座標を計算する
+def calculate_endpoint_coordinates(
+    start_x: int,
+    start_y: int,
+    start_z: int,
+    orientation: Union[int, str],
+    width: int,
+    height: int,
+    depth: int,
+) -> Tuple[int, int, int]:
+    """
+    Args:
+        start_x, start_y, start_z: 始点の座標
+        orientation: 回転角度（int）
+            -180: 北, -90: 東, 0: 南, 90: 西
+        width: 横方向の移動量（正: 右, 負: 左）
+        height: 垂直方向の移動量（正: 上, 負: 下）
+        depth: 奥行方向の移動量（正: 前方, 負: 後方）
+    Returns:
+        (x, y, z): 終点の座標を表すタプル
+    """
+    if isinstance(orientation, str):
+        orientation = azimuth_dict_reverse[orientation]
+
+    # 前方ベクトル (fx, fz) を回転角度から決定
+    if orientation == -180:
+        fx, fz = 0, -1
+    elif orientation == -90:
+        fx, fz = 1, 0
+    elif orientation == 0:
+        fx, fz = 0, 1
+    elif orientation == 90:
+        fx, fz = -1, 0
+    else:
+        raise ValueError(f"未知の回転角度: {orientation}")
+
+    # 横方向ベクトル (lx, lz) = 前方ベクトルを時計回り90°回転
+    lx, lz = fz, -fx
+
+    # 終点座標を計算
+    end_x = start_x + width * lx + depth * fx
+    end_y = start_y + height
+    end_z = start_z + width * lz + depth * fz
+
+    return (end_x, end_y, end_z)
+
+
+# 始点と終点の座標からその距離を計算する
+def calculate_distance(start_x: int, start_y: int, start_z: int, end_x: int, end_y: int, end_z: int) -> float:
+    """
+    3次元空間における2点間のユークリッド距離を計算して返す関数。
+    Args:
+        start_x, start_y, start_z: 始点の座標
+        end_x, end_y, end_z: 終点の座標
+    Returns:
+        float: 2点間の距離
+    """
+    return ((end_x - start_x) ** 2 + (end_y - start_y) ** 2 + (end_z - start_z) ** 2) ** 0.5
+
+
 def show_chunk_range() -> None:
     """現在地点のチャンクの範囲を表示する"""
     agent.say(f"Current Chunk : {int(player.position.x // 16)}, {int(player.position.z // 16)}")
@@ -171,7 +231,9 @@ def agent_turn(direction: str, count: int = 1) -> None:
         agent.turn(direction)
 
 
-def agent_move(direction: str, count: int = 1, is_destroy: bool = False, is_collect: bool = False, stop_bedrock: bool = False) -> None:
+def agent_move(
+    direction: str, count: int = 1, is_destroy: bool = False, is_collect: bool = False, stop_bedrock: bool = False
+) -> None:
     for i in range(count):
         if stop_bedrock:
             if agent.inspect(direction).id == "bedrock":
@@ -426,16 +488,10 @@ def build_space(
 #         re.compile(r"^(?:netherrack)$"),
 #     ],
 # ) -> None:
-#     min_x = agent.position.x
-#     min_y = agent.position.y
-#     min_z = agent.position.z
-#     max_x = min_x + width
-#     max_y = min_y + height
-#     max_z = min_z + depth
-#     # 開始地点に移動
-#     if agent.position.y < min_y:
-#         agent_move("up", 1, True, True)
-    
+#     initial_position = agent.position
+#     start_x, start_y, start_z = initial_position.x, initial_position.y, initial_position.z
+#     orientation = agent.rotation
+#     end_x, end_y, end_z = calculate_endpoint_coordinates(start_x, start_y, start_z, orientation, width, height, depth)
 
 
 # 高速に通路を掘る
