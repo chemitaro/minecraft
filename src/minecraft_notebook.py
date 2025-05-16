@@ -119,13 +119,13 @@ def calculate_endpoint_coordinates(
 
     # 前方ベクトル (fx, fz) を回転角度から決定
     if orientation == -180:
-        fx, fz = 0, -1
-    elif orientation == -90:
-        fx, fz = 1, 0
-    elif orientation == 0:
         fx, fz = 0, 1
-    elif orientation == 90:
+    elif orientation == -90:
         fx, fz = -1, 0
+    elif orientation == 0:
+        fx, fz = 0, -1
+    elif orientation == 90:
+        fx, fz = 1, 0
     else:
         raise ValueError(f"未知の回転角度: {orientation}")
 
@@ -534,11 +534,10 @@ class BuildSpace:
         orientation = agent.rotation
         height_start_x, height_start_y, height_start_z = current_position.x, current_position.y, current_position.z
         height_end_x, height_end_y, height_end_z = calculate_endpoint_coordinates(
-            height_start_x, height_start_y, height_start_z, orientation, 0, self.height, 0
+            height_start_x, height_start_y, height_start_z, orientation, 0, -self.height, 0
         )
         # 下に掘削する
         while True:
-            self.height_count += 1
             current_position = agent.position
             height_distance = int(
                 calculate_distance(
@@ -552,12 +551,14 @@ class BuildSpace:
             )
             # 目的地に到達したら掘削を終了する
             if height_distance < 1:
+                agent.say(f"Success dig height: {self.width_count}")
                 break
             elif height_distance > self.height + 1:
                 agent.say(f"height_distance: {height_distance}, self.height: {self.height}")
                 return False
 
             for step in range(height_distance):
+                self.height_count += 1
                 agent_move("down", 1, True, True)
 
         # 上に戻る
@@ -574,13 +575,14 @@ class BuildSpace:
                 )
             )
             if height_distance < 1:
+                agent.say(f"Success return height: {self.width_count}")
                 break
             elif height_distance > self.height + 1:
                 agent.say(f"height_distance: {height_distance}, self.height: {self.height}")
                 return False
             for step in range(height_distance):
                 agent_move("up", 1, True, True)
-        agent.say(f"Success dig height: {self.height_count}")
+        self.height_count = 0
         return True
 
     def dig_width(self) -> bool:
@@ -592,44 +594,58 @@ class BuildSpace:
         width_end_x, width_end_y, width_end_z = calculate_endpoint_coordinates(
             width_start_x, width_start_y, width_start_z, orientation, self.width, 0, 0
         )
+        agent.say(f"width_start_x: {width_start_x}, width_start_y: {width_start_y}, width_start_z: {width_start_z}")
+        agent.say(f"width_end_x: {width_end_x}, width_end_y: {width_end_y}, width_end_z: {width_end_z}")
+
         # 右に掘削する
         while True:
-            self.width_count += 1
             current_position = agent.position
+            agent.say(f"current_position: {current_position}")
+            agent.say(f"width_end_x: {width_end_x}, width_end_y: {width_end_y}, width_end_z: {width_end_z}")
             width_distance = int(
                 calculate_distance(
                     current_position.x, current_position.y, current_position.z, width_end_x, width_end_y, width_end_z
                 )
             )
+            agent.say(f"width_distance: {width_distance}")
             if width_distance < 1:
+                agent.say(f"Success dig width: {self.depth_count}")
                 break
             elif width_distance > self.width + 1:
                 agent.say(f"width_distance: {width_distance}, self.width: {self.width}")
                 return False
 
             for step in range(width_distance):
-                agent_move("right", 1, True, True)
+                self.width_count += 1
                 height_result = self.dig_height()
                 if height_result is False:
                     return False
+                agent_move("right", 1, True, True)
 
+        agent.say("右方向の掘削が終わったので、左に戻ります。")
         # 左に戻る
         while True:
             current_position = agent.position
             width_distance = int(
                 calculate_distance(
-                    current_position.x, current_position.y, current_position.z, width_start_x, width_start_y, width_start_z
+                    current_position.x,
+                    current_position.y,
+                    current_position.z,
+                    width_start_x,
+                    width_start_y,
+                    width_start_z,
                 )
             )
             if width_distance < 1:
+                agent.say(f"Success return width: {self.depth_count}")
                 break
             elif width_distance > self.width:
+                agent.say(f"width_distance: {width_distance}, self.width: {self.width}")
                 return False
 
             for step in range(width_distance):
                 agent_move("left", 1, True, True)
         self.width_count = 0
-        agent.say(f"Success dig width: {self.width_count}")
         return True
 
     def dig_depth(self) -> bool:
@@ -641,9 +657,10 @@ class BuildSpace:
         depth_end_x, depth_end_y, depth_end_z = calculate_endpoint_coordinates(
             depth_start_x, depth_start_y, depth_start_z, orientation, 0, 0, self.depth
         )
+        agent.say(f"depth_start_x: {depth_start_x}, depth_start_y: {depth_start_y}, depth_start_z: {depth_start_z}")
+        agent.say(f"depth_end_x: {depth_end_x}, depth_end_y: {depth_end_y}, depth_end_z: {depth_end_z}")
         # 奥に掘削する
         while True:
-            self.depth_count += 1
             current_position = agent.position
             depth_distance = int(
                 calculate_distance(
@@ -651,23 +668,27 @@ class BuildSpace:
                 )
             )
             if depth_distance < 1:
+                agent.say(f"Success dig depth: finish")
                 break
             elif depth_distance > self.depth:
                 return False
 
             for step in range(depth_distance):
-                agent_move("forward", 1, True, True)
+                self.depth_count += 1
                 width_result = self.dig_width()
                 if width_result is False:
                     return False
 
-        agent.say(f"Success dig depth: {self.depth_count}")
+                agent_move("forward", 1, True, True)
+
+        self.depth_count = 0
         return True
 
     def build(self) -> None:
         """指定した範囲の空間を作成する"""
         self.move_to_start_position()
         self.dig_depth()
+        agent.say("build finish")
 
 
 # バグを発見したため、作り直す
@@ -1032,7 +1053,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         chunked_messages = message.split()
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
-            space_build = BuildSpace(width=10, height=10, depth=10)
+            space_build = BuildSpace(width=3, height=3, depth=3)
             space_build.build()
             agent.say("trial finish")
         elif command == "switch":
