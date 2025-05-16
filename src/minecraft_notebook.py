@@ -3,7 +3,7 @@ import random
 import re
 import time
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import List, Optional, Tuple, Union
 
 ignore_block_name_pattern = re.compile(
@@ -94,6 +94,58 @@ def convert_absolute_to_relative_coordinates(absolute_coordinates: List[int]) ->
 
 
 # 始点の座標、向いている方角、横方向の移動距離、垂直方向の移動距離、奥行方向の移動距離から終点の座標を計算する
+class Direction(IntEnum):
+    EAST = -90  # X+
+    SOUTH = 0  # Z+
+    WEST = 90  # X-
+    NORTH = -180  # Z-
+
+    # 角度 / 文字列を Direction へ正規化
+    @classmethod
+    def from_input(cls, ori: Union[int, str]) -> "Direction":
+        if isinstance(ori, str):
+            try:
+                return {
+                    "E": cls.EAST,
+                    "東": cls.EAST,
+                    "S": cls.SOUTH,
+                    "南": cls.SOUTH,
+                    "W": cls.WEST,
+                    "西": cls.WEST,
+                    "N": cls.NORTH,
+                    "北": cls.NORTH,
+                }[ori.upper()]
+            except KeyError:
+                raise ValueError(f"未知の方角文字列: {ori}")
+
+        # int の場合は -180,-90,0,90 のいずれかに正規化
+        az = ((ori + 180) % 360) - 180  # → (-180, 180]
+        if az == 180:  # 180° は -180° とみなす
+            az = -180
+        try:
+            return cls(az)
+        except ValueError:
+            raise ValueError("許容角度は -180 / -90 / 0 / 90 (±360n 可)")
+
+    # ───── ベクトル util ─────
+    @property
+    def front_vec(self) -> Tuple[int, int]:
+        """(fx, fz) … 前方=+depth 方向単位ベクトル"""
+        return {
+            Direction.SOUTH: (0, 1),  # +Z
+            Direction.WEST: (-1, 0),  # -X
+            Direction.NORTH: (0, -1),  # -Z
+            Direction.EAST: (1, 0),  # +X
+        }[self]
+
+    @property
+    def right_vec(self) -> Tuple[int, int]:
+        """(rx, rz) … 右=+width 方向単位ベクトル"""
+        fx, fz = self.front_vec
+        return -fz, fx  # 右 = 前を反時計回り 90°
+
+
+# ─────────────────────────────────────────
 def calculate_endpoint_coordinates(
     start_x: int,
     start_y: int,
@@ -104,40 +156,17 @@ def calculate_endpoint_coordinates(
     depth: int,
 ) -> Tuple[int, int, int]:
     """
-    Args:
-        start_x, start_y, start_z: 始点の座標
-        orientation: 回転角度（int）
-            -180: 北, -90: 東, 0: 南, 90: 西
-        width: 横方向の移動量（正: 右, 負: 左）
-        height: 垂直方向の移動量（正: 上, 負: 下）
-        depth: 奥行方向の移動量（正: 前方, 負: 後方）
-    Returns:
-        (x, y, z): 終点の座標を表すタプル
+    Minecraft 座標系 (東X+ / 南Z+ / 上Y+) で
+    始点 -> (width 右/左, height 上/下, depth 前/後) 移動後の終点を返す。
     """
-    if isinstance(orientation, str):
-        orientation = azimuth_dict_reverse[orientation]
+    d = Direction.from_input(orientation)
+    rx, rz = d.right_vec
+    fx, fz = d.front_vec
 
-    # 前方ベクトル (fx, fz) を回転角度から決定
-    if orientation == -180:
-        fx, fz = 0, 1
-    elif orientation == -90:
-        fx, fz = -1, 0
-    elif orientation == 0:
-        fx, fz = 0, -1
-    elif orientation == 90:
-        fx, fz = 1, 0
-    else:
-        raise ValueError(f"未知の回転角度: {orientation}")
-
-    # 横方向ベクトル (lx, lz) = 前方ベクトルを時計回り90°回転
-    lx, lz = fz, -fx
-
-    # 終点座標を計算
-    end_x = start_x + width * lx + depth * fx
+    end_x = start_x + width * rx + depth * fx
     end_y = start_y + height
-    end_z = start_z + width * lz + depth * fz
-
-    return (end_x, end_y, end_z)
+    end_z = start_z + width * rz + depth * fz
+    return end_x, end_y, end_z
 
 
 # 始点と終点の座標からその距離を計算する
@@ -623,12 +652,14 @@ class BuildSpace:
                 self.width_count += 1
                 height_result = self.dig_height()
                 if height_result is False:
+                    agent.say("幅方向の掘削に失敗しました。")
                     return False
                 agent_move("right", 1, True, True)
         self.width_count += 1
         # 右端を縦に掘削する
         height_result = self.dig_height()
         if height_result is False:
+            agent.say("右端の掘削に失敗しました。")
             return False
 
         agent.say("右方向の掘削が終わったので、左に戻ります。")
@@ -677,15 +708,17 @@ class BuildSpace:
                 )
             )
             if depth_distance < 1:
-                agent.say(f"Success dig depth: finish")
+                agent.say("Success dig depth: finish")
                 break
             elif depth_distance > self.depth:
+                agent.say(f"depth_distance: {depth_distance}, self.depth: {self.depth}")
                 return False
 
             for step in range(depth_distance):
                 self.depth_count += 1
                 width_result = self.dig_width()
                 if width_result is False:
+                    agent.say("奥行方向の掘削に失敗しました。")
                     return False
 
                 agent_move("forward", 1, True, True)
@@ -693,6 +726,7 @@ class BuildSpace:
         # 奥端を横に掘削する
         width_result = self.dig_width()
         if width_result is False:
+            agent.say("奥端の掘削に失敗しました。")
             return False
 
         self.depth_count = 0
