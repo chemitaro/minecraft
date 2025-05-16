@@ -512,18 +512,22 @@ class BuildSpace:
         """開始座標に移動する。"""
         current_position = agent.position
         initial_x, initial_y, initial_z = current_position.x, current_position.y, current_position.z
-        start_x, start_y, start_z = initial_x, initial_y + self.height, initial_z
+        start_x, start_y, start_z = initial_x, initial_y + self.height - 1, initial_z
 
         while True:
             current_position = agent.position
+            agent.say(f"current_position: {current_position}")
+            agent.say(f"start_x: {start_x}, start_y: {start_y}, start_z: {start_z}")
             distance = int(
                 calculate_distance(
                     current_position.x, current_position.y, current_position.z, start_x, start_y, start_z
                 )
             )
+            agent.say(f"distance: {distance}")
             if distance < 1:
                 break
-            agent_move("up", distance, True, True)
+            for step in range(distance):
+                agent_move("up", 1, True, True)
         agent.say(f"Alive start position: {current_position}")
         return True
 
@@ -534,7 +538,7 @@ class BuildSpace:
         orientation = agent.rotation
         height_start_x, height_start_y, height_start_z = current_position.x, current_position.y, current_position.z
         height_end_x, height_end_y, height_end_z = calculate_endpoint_coordinates(
-            height_start_x, height_start_y, height_start_z, orientation, 0, -self.height, 0
+            height_start_x, height_start_y, height_start_z, orientation, 0, -self.height + 1, 0
         )
         # 下に掘削する
         while True:
@@ -592,7 +596,7 @@ class BuildSpace:
         orientation = agent.rotation
         width_start_x, width_start_y, width_start_z = current_position.x, current_position.y, current_position.z
         width_end_x, width_end_y, width_end_z = calculate_endpoint_coordinates(
-            width_start_x, width_start_y, width_start_z, orientation, self.width, 0, 0
+            width_start_x, width_start_y, width_start_z, orientation, self.width - 1, 0, 0
         )
         agent.say(f"width_start_x: {width_start_x}, width_start_y: {width_start_y}, width_start_z: {width_start_z}")
         agent.say(f"width_end_x: {width_end_x}, width_end_y: {width_end_y}, width_end_z: {width_end_z}")
@@ -621,6 +625,11 @@ class BuildSpace:
                 if height_result is False:
                     return False
                 agent_move("right", 1, True, True)
+        self.width_count += 1
+        # 右端を縦に掘削する
+        height_result = self.dig_height()
+        if height_result is False:
+            return False
 
         agent.say("右方向の掘削が終わったので、左に戻ります。")
         # 左に戻る
@@ -655,7 +664,7 @@ class BuildSpace:
         orientation = agent.rotation
         depth_start_x, depth_start_y, depth_start_z = current_position.x, current_position.y, current_position.z
         depth_end_x, depth_end_y, depth_end_z = calculate_endpoint_coordinates(
-            depth_start_x, depth_start_y, depth_start_z, orientation, 0, 0, self.depth
+            depth_start_x, depth_start_y, depth_start_z, orientation, 0, 0, self.depth - 1
         )
         agent.say(f"depth_start_x: {depth_start_x}, depth_start_y: {depth_start_y}, depth_start_z: {depth_start_z}")
         agent.say(f"depth_end_x: {depth_end_x}, depth_end_y: {depth_end_y}, depth_end_z: {depth_end_z}")
@@ -680,6 +689,11 @@ class BuildSpace:
                     return False
 
                 agent_move("forward", 1, True, True)
+        self.depth_count += 1
+        # 奥端を横に掘削する
+        width_result = self.dig_width()
+        if width_result is False:
+            return False
 
         self.depth_count = 0
         return True
