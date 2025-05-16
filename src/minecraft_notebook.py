@@ -409,6 +409,7 @@ def block_liquid(
     block_name_pattern: Union[str, re.Pattern] = liquid_block_name_pattern,
     ignore_flow: bool = False,
 ) -> bool:
+    """指定された方向において、液体ブロックを設置する"""
     is_block_liquid = False
     for direction in directions:
         if ignore_flow and is_block_list_match_direction(
@@ -619,6 +620,9 @@ class BuildSpace:
 
                 agent_move("down", 1, True, True)
 
+                if self.water:
+                    block_liquid(directions=["up", "left", "forward", "back", "right", "down"])
+
         # 左面に壁が必要な場合は、左面に壁を作る
         if self.l and self.width_count == 1:
             agent_put_block("left")
@@ -655,7 +659,13 @@ class BuildSpace:
                 agent.say(f"height_distance: {height_distance}, self.height: {self.height}")
                 return False
             for step in range(height_distance):
+                if self.water and self.depth_count != 1 and agent.detect("back"):
+                    agent.destroy("back")
+                    agent.collect()
                 agent_move("up", 1, True, True)
+            if self.water and self.depth_count != 1 and agent.detect("back"):
+                agent.destroy("back")
+                agent.collect()
         self.height_count = 0
         return True
 
@@ -696,6 +706,8 @@ class BuildSpace:
                     agent.say("幅方向の掘削に失敗しました。")
                     return False
                 agent_move("right", 1, True, True)
+                if self.water:
+                    block_liquid(directions=["up", "left", "forward", "back", "right", "down"])
         self.width_count += 1
         # 右端を縦に掘削する
         height_result = self.dig_height(right_edge=True, front_edge=front_edge)
@@ -763,6 +775,8 @@ class BuildSpace:
                     return False
 
                 agent_move("forward", 1, True, True)
+                if self.water:
+                    block_liquid(directions=["up", "left", "forward", "back", "right", "down"])
         self.depth_count += 1
         # 奥端を横に掘削する
         width_result = self.dig_width(front_edge=True)
@@ -1142,7 +1156,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         chunked_messages = message.split()
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
-            space_build = BuildSpace(width=3, height=3, depth=3, f=True, b=True, l=True, r=True, u=True, d=True)
+            space_build = BuildSpace(width=5, height=5, depth=5, f=True, b=True, l=True, r=True, u=True, d=True, water=True)
             space_build.build()
             agent.say("trial finish")
         elif command == "switch":
