@@ -21,8 +21,6 @@ notify_block_name_pattern = re.compile(
     r"^(?:cobblestone|end_portal_frame|vault|trial_spawner|mob_spawner|suspicious_sand|suspicious_gravel|sculk|sculk_vein|sculk_sensor|sculk_catalyst|sculk_shrieker|oak_planks|spruce_planks|birch_planks|jungle_planks|acacia_planks|dark_oak_planks|mangrove_planks|cherry_planks|pale_oak_planks|bamboo_planks|crimson_planks|warped_planks|oak_fence|spruce_fence|birch_fence|jungle_fence|acacia_fence|dark_oak_fence|mangrove_fence|cherry_fence|pale_oak_fence|bamboo_fence|crimson_fence|warped_fence|chiseled_stone_bricks|stone_bricks|mossy_stone_bricks|infested_stone|infested_cobblestone|infested_stone_bricks|infested_mossy_stone_bricks|infested_cracked_stone_bricks|infested_chiseled_stone_bricks|infested_deepslate|lodestone|polished_deepslate|deepslate_bricks|deepslate_tiles|chiseled_deepslate|cracked_deepslate_bricks|cracked_deepslate_tiles|cobbled_deepslate_double_slab|cobbled_deepslate_slab|cobbled_deepslate_stairs|polished_deepslate_double_slab|polished_deepslate_slab|polished_deepslate_stairs|deepslate_brick_double_slab|deepslate_brick_slab|deepslate_brick_stairs|deepslate_tile_double_slab|deepslate_tile_slab|deepslate_tile_stairs|reinforced_deepslate|stone_bricks|tuff_bricks|chiseled_tuff|chiseled_tuff_bricks|chiseled_sandstone|chiseled_sandstone|nether_brick|polished_blackstone_bricks|cracked_polished_blackstone_bricks|chiseled_polished_blackstone|gold_block|quartz_block|gilded_blackstone|polished_blackstone|purpur_block|purpur_pillar|end_bricks|copper_block|exposed_copper|weathered_copper|oxidized_copper|waxed_copper|waxed_exposed_copper|waxed_weathered_copper|waxed_oxidized_copper|cut_copper|exposed_cut_copper|weathered_cut_copper|oxidized_cut_copper|waxed_cut_copper|waxed_exposed_cut_copper|waxed_weathered_cut_copper|waxed_oxidized_cut_copper|copper_grate|exposed_copper_grate|weathered_copper_grate|oxidized_copper_grate|waxed_copper_grate|waxed_exposed_copper_grate|waxed_weathered_copper_grate|waxed_oxidized_copper_grate|prismarine)$"
 )
 player_mention = "@yutaf "
-azimuth_dict = {-90: "E", 0: "S", 90: "W", -180: "N"}
-azimuth_dict_reverse = {v: k for k, v in azimuth_dict.items()}
 opposite_direction_dict = {
     "forward": "back",
     "back": "forward",
@@ -39,6 +37,69 @@ orthogonal_directions_dict = {
     "up": ["forward", "back", "left", "right"],
     "down": ["forward", "back", "left", "right"],
 }
+
+
+# 始点の座標、向いている方角、横方向の移動距離、垂直方向の移動距離、奥行方向の移動距離から終点の座標を計算する
+class Direction(IntEnum):
+    EAST = -90  # X+
+    SOUTH = 0  # Z+
+    WEST = 90  # X-
+    NORTH = -180  # Z-
+
+    # 角度 / 文字列を Direction へ正規化
+    @classmethod
+    def from_input(cls, ori: Union[int, str]) -> "Direction":
+        if isinstance(ori, str):
+            try:
+                return {
+                    "E": cls.EAST,
+                    "東": cls.EAST,
+                    "S": cls.SOUTH,
+                    "南": cls.SOUTH,
+                    "W": cls.WEST,
+                    "西": cls.WEST,
+                    "N": cls.NORTH,
+                    "北": cls.NORTH,
+                }[ori.upper()]
+            except KeyError:
+                raise ValueError(f"未知の方角文字列: {ori}")
+
+        # int の場合は -180,-90,0,90 のいずれかに正規化
+        az = ((ori + 180) % 360) - 180  # → (-180, 180]
+        if az == 180:  # 180° は -180° とみなす
+            az = -180
+        try:
+            return cls(az)
+        except ValueError:
+            raise ValueError("許容角度は -180 / -90 / 0 / 90 (±360n 可)")
+
+    # ───── ベクトル util ─────
+    @property
+    def front_vec(self) -> Tuple[int, int]:
+        """(fx, fz) … 前方=+depth 方向単位ベクトル"""
+        return {
+            Direction.SOUTH: (0, 1),  # +Z
+            Direction.WEST: (-1, 0),  # -X
+            Direction.NORTH: (0, -1),  # -Z
+            Direction.EAST: (1, 0),  # +X
+        }[self]
+
+    @property
+    def right_vec(self) -> Tuple[int, int]:
+        """(rx, rz) … 右=+width 方向単位ベクトル"""
+        fx, fz = self.front_vec
+        return -fz, fx  # 右 = 前を反時計回り 90°
+
+    @classmethod
+    def to_char(cls, angle: int) -> str:
+        """入力された角度に対応する方角のアルファベット1文字を返す"""
+        direction_instance = cls.from_input(angle)
+        return {
+            cls.EAST: "E",
+            cls.SOUTH: "S",
+            cls.WEST: "W",
+            cls.NORTH: "N",
+        }[direction_instance]
 
 
 # 発見したnotify_blockの名前と座標
@@ -93,59 +154,6 @@ def convert_absolute_to_relative_coordinates(absolute_coordinates: List[int]) ->
     ]
 
 
-# 始点の座標、向いている方角、横方向の移動距離、垂直方向の移動距離、奥行方向の移動距離から終点の座標を計算する
-class Direction(IntEnum):
-    EAST = -90  # X+
-    SOUTH = 0  # Z+
-    WEST = 90  # X-
-    NORTH = -180  # Z-
-
-    # 角度 / 文字列を Direction へ正規化
-    @classmethod
-    def from_input(cls, ori: Union[int, str]) -> "Direction":
-        if isinstance(ori, str):
-            try:
-                return {
-                    "E": cls.EAST,
-                    "東": cls.EAST,
-                    "S": cls.SOUTH,
-                    "南": cls.SOUTH,
-                    "W": cls.WEST,
-                    "西": cls.WEST,
-                    "N": cls.NORTH,
-                    "北": cls.NORTH,
-                }[ori.upper()]
-            except KeyError:
-                raise ValueError(f"未知の方角文字列: {ori}")
-
-        # int の場合は -180,-90,0,90 のいずれかに正規化
-        az = ((ori + 180) % 360) - 180  # → (-180, 180]
-        if az == 180:  # 180° は -180° とみなす
-            az = -180
-        try:
-            return cls(az)
-        except ValueError:
-            raise ValueError("許容角度は -180 / -90 / 0 / 90 (±360n 可)")
-
-    # ───── ベクトル util ─────
-    @property
-    def front_vec(self) -> Tuple[int, int]:
-        """(fx, fz) … 前方=+depth 方向単位ベクトル"""
-        return {
-            Direction.SOUTH: (0, 1),  # +Z
-            Direction.WEST: (-1, 0),  # -X
-            Direction.NORTH: (0, -1),  # -Z
-            Direction.EAST: (1, 0),  # +X
-        }[self]
-
-    @property
-    def right_vec(self) -> Tuple[int, int]:
-        """(rx, rz) … 右=+width 方向単位ベクトル"""
-        fx, fz = self.front_vec
-        return -fz, fx  # 右 = 前を反時計回り 90°
-
-
-# ─────────────────────────────────────────
 def calculate_endpoint_coordinates(
     start_x: int,
     start_y: int,
@@ -201,7 +209,7 @@ def show_agent_location() -> None:
     """エージェントの場所と周囲の状況を表示する"""
     agent.say(f"World : {current_world_enum.value.name}")
     agent.say(f"Position : {agent.position}")
-    agent.say(f"Rotation : {azimuth_dict[agent.rotation]}")
+    agent.say(f"Rotation : {Direction.to_char(agent.rotation)}")
     for direction in ["forward", "back", "left", "right", "up", "down"]:
         agent.say(f"- {direction} : {agent.inspect(direction).id}")
 
@@ -317,7 +325,7 @@ def set_agent_azimuth(azimuth: Union[int, str]) -> bool:
     """エージェントの向く方角を変える"""
     # 文字列の場合は、azimuth_dict_reverseから取得
     if isinstance(azimuth, str):
-        azimuth = azimuth_dict_reverse[azimuth]
+        azimuth = Direction.from_input(azimuth).value
     for i in range(4):
         if agent.rotation == azimuth:
             return True
@@ -1101,6 +1109,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         chunked_messages = message.split()
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
+            set_agent_azimuth("N")
             space_build = BuildSpace(width=3, height=3, depth=3)
             space_build.build()
             agent.say("trial finish")
