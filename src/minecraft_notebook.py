@@ -568,7 +568,7 @@ class BuildSpace:
         agent.say(f"Alive start position: {current_position}")
         return True
 
-    def dig_height(self) -> bool:
+    def dig_height(self, right_edge: bool = False, front_edge: bool = False) -> bool:
         """高さ方向の掘削を行う。"""
         self.height_count = 0
         current_position = agent.position
@@ -577,7 +577,11 @@ class BuildSpace:
         height_end_x, height_end_y, height_end_z = calculate_endpoint_coordinates(
             height_start_x, height_start_y, height_start_z, orientation, 0, -self.height + 1, 0
         )
-        # 下に掘削する
+        # 上面に壁が必要な場合は、上面に壁を作る
+        if self.u:
+            agent_put_block("up")
+
+        # 下方向に掘削する
         while True:
             current_position = agent.position
             height_distance = int(
@@ -600,7 +604,36 @@ class BuildSpace:
 
             for step in range(height_distance):
                 self.height_count += 1
+                # 左面に壁が必要な場合は、左面に壁を作る
+                if self.l and self.width_count == 1:
+                    agent_put_block("left")
+                # 右面に壁が必要な場合は、右面に壁を作る
+                if self.r and right_edge:
+                    agent_put_block("right")
+                # 正面に壁が必要な場合は、正面に壁を作る
+                if self.f and front_edge:
+                    agent_put_block("forward")
+                # 背面に壁が必要な場合は、背面に壁を作る
+                if self.b and self.depth_count == 1:
+                    agent_put_block("back")
+
                 agent_move("down", 1, True, True)
+
+        # 左面に壁が必要な場合は、左面に壁を作る
+        if self.l and self.width_count == 1:
+            agent_put_block("left")
+        # 右面に壁が必要な場合は、右面に壁を作る
+        if self.r and right_edge:
+            agent_put_block("right")
+        # 正面に壁が必要な場合は、正面に壁を作る
+        if self.f and front_edge:
+            agent_put_block("forward")
+        # 背面に壁が必要な場合は、背面に壁を作る
+        if self.b and self.depth_count == 1:
+            agent_put_block("back")
+        # 底面に壁が必要な場合は、底面に壁を作る
+        if self.d:
+            agent_put_block("down")
 
         # 上に戻る
         while True:
@@ -626,7 +659,7 @@ class BuildSpace:
         self.height_count = 0
         return True
 
-    def dig_width(self) -> bool:
+    def dig_width(self, front_edge: bool = False) -> bool:
         """幅方向の掘削を行う。"""
         self.width_count = 0
         current_position = agent.position
@@ -658,14 +691,14 @@ class BuildSpace:
 
             for step in range(width_distance):
                 self.width_count += 1
-                height_result = self.dig_height()
+                height_result = self.dig_height(right_edge=False, front_edge=front_edge)
                 if height_result is False:
                     agent.say("幅方向の掘削に失敗しました。")
                     return False
                 agent_move("right", 1, True, True)
         self.width_count += 1
         # 右端を縦に掘削する
-        height_result = self.dig_height()
+        height_result = self.dig_height(right_edge=True, front_edge=front_edge)
         if height_result is False:
             agent.say("右端の掘削に失敗しました。")
             return False
@@ -724,7 +757,7 @@ class BuildSpace:
 
             for step in range(depth_distance):
                 self.depth_count += 1
-                width_result = self.dig_width()
+                width_result = self.dig_width(front_edge=False)
                 if width_result is False:
                     agent.say("奥行方向の掘削に失敗しました。")
                     return False
@@ -732,7 +765,7 @@ class BuildSpace:
                 agent_move("forward", 1, True, True)
         self.depth_count += 1
         # 奥端を横に掘削する
-        width_result = self.dig_width()
+        width_result = self.dig_width(front_edge=True)
         if width_result is False:
             agent.say("奥端の掘削に失敗しました。")
             return False
@@ -1109,8 +1142,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         chunked_messages = message.split()
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
-            set_agent_azimuth("N")
-            space_build = BuildSpace(width=3, height=3, depth=3)
+            space_build = BuildSpace(width=3, height=3, depth=3, f=True, b=True, l=True, r=True, u=True, d=True)
             space_build.build()
             agent.say("trial finish")
         elif command == "switch":
