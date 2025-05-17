@@ -614,39 +614,14 @@ class BuildSpace:
 
             for step in range(height_distance):
                 self.height_count += 1
-                # 左面に壁が必要な場合は、左面に壁を作る
-                if self.l and self.width_count == 1:
-                    agent_put_block("left")
-                # 右面に壁が必要な場合は、右面に壁を作る
-                if self.r and right_edge:
-                    agent_put_block("right")
-                # 正面に壁が必要な場合は、正面に壁を作る
-                if self.f and front_edge:
-                    agent_put_block("forward")
-                # 背面に壁が必要な場合は、背面に壁を作る
-                if self.b and self.depth_count == 1:
-                    agent_put_block("back")
+                self._build_wall_of_front_right_left_back(right_edge=right_edge, front_edge=front_edge)
 
                 agent_move("down", 1, True, True)
 
                 if self.water:
                     block_liquid(directions=["up", "left", "forward", "back", "right", "down"])
 
-        # 左面に壁が必要な場合は、左面に壁を作る
-        if self.l and self.width_count == 1:
-            agent_put_block("left")
-        # 右面に壁が必要な場合は、右面に壁を作る
-        if self.r and right_edge:
-            agent_put_block("right")
-        # 正面に壁が必要な場合は、正面に壁を作る
-        if self.f and front_edge:
-            agent_put_block("forward")
-        # 背面に壁が必要な場合は、背面に壁を作る
-        if self.b and self.depth_count == 1:
-            agent_put_block("back")
-        # 底面に壁が必要な場合は、底面に壁を作る
-        if self.d:
-            agent_put_block("down")
+        self._build_wall_of_front_right_left_back(right_edge=right_edge, front_edge=front_edge)
 
         # 上に戻る
         while True:
@@ -801,6 +776,21 @@ class BuildSpace:
         self.move_to_start_position()
         self.dig_depth()
         agent.say("build finish")
+
+    # 前後左右の壁が必要かどうかを判断して設置する。
+    def _build_wall_of_front_right_left_back(self, right_edge: bool = False, front_edge: bool = False) -> None:
+        # 左面に壁が必要な場合は、左面に壁を作る
+        if self.l and self.width_count == 1:
+            agent_put_block("left")
+        # 右面に壁が必要な場合は、右面に壁を作る
+        if self.r and right_edge:
+            agent_put_block("right")
+        # 正面に壁が必要な場合は、正面に壁を作る
+        if self.f and front_edge:
+            agent_put_block("forward")
+        # 背面に壁が必要な場合は、背面に壁を作る
+        if self.b and self.depth_count == 1:
+            agent_put_block("back")
 
 
 # 高速に通路を掘る
