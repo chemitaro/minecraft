@@ -552,6 +552,9 @@ class BuildSpace:
         initial_x, initial_y, initial_z = current_position.x, current_position.y, current_position.z
         start_x, start_y, start_z = initial_x, initial_y + self.height - 1, initial_z
 
+        if self.water:
+            block_liquid(directions=["up", "left", "forward", "back", "right", "down"])
+
         while True:
             current_position = agent.position
             agent.say(f"current_position: {current_position}")
@@ -563,10 +566,16 @@ class BuildSpace:
             )
             agent.say(f"distance: {distance}")
             if distance < 1:
+                agent.say(f"Alive start position: {current_position}")
                 break
+            elif distance > self.height + 1:
+                agent.say(f"distance: {distance}, self.height: {self.height}")
+                return False
+
             for step in range(distance):
                 agent_move("up", 1, True, True)
-        agent.say(f"Alive start position: {current_position}")
+                if self.water:
+                    block_liquid(directions=["up", "left", "forward", "back", "right", "down"])
         return True
 
     def dig_height(self, right_edge: bool = False, front_edge: bool = False) -> bool:
@@ -794,160 +803,6 @@ class BuildSpace:
         agent.say("build finish")
 
 
-# バグを発見したため、作り直す
-# def build_space_re(
-#     width: int,
-#     height: int,
-#     depth: int,
-#     *,
-#     f: bool = False,
-#     b: bool = False,
-#     l: bool = False,
-#     r: bool = False,
-#     u: bool = False,
-#     d: bool = False,
-#     safe: bool = False,
-#     water: bool = False,
-#     block_names: List[Union[str, re.Pattern]] = [
-#         re.compile(r"^(?:cobblestone|cobbled_deepslate|)$"),
-#         re.compile(r"^(?:deepslate|stone|dirt|diorite|baslate|tuff|granite|andesite|blackstone)$"),
-#         re.compile(r"^(?:netherrack)$"),
-#     ],
-# ) -> None:
-#     # width, height, depthの値値が1以上でない場合は、エラーを出力する。
-#     if width < 1 or height < 1 or depth < 1:
-#         agent.say("width, height, depthの値は1以上でなければなりません。")
-#         return
-
-#     initial_position = agent.position
-#     initial_x, initial_y, initial_z = initial_position.x, initial_position.y, initial_position.z
-#     orientation = agent.rotation
-#     end_x, start_y, end_z = calculate_endpoint_coordinates(
-#         initial_x, initial_y, initial_z, orientation, width, height, depth
-#     )
-#     start_x = initial_x
-#     end_y = initial_y
-#     start_z = initial_z
-
-#     # 開始座標に移動する。
-#     while True:
-#         current_position = agent.position
-#         distance = int(
-#             calculate_distance(current_position.x, current_position.y, current_position.z, start_x, start_y, start_z)
-#         )
-#         if distance < 1:
-#             break
-#         agent_move("up", distance, True, True)
-
-#     # 掘削する
-#     width_count = 0
-#     while True:
-#         width_count += 1
-#         current_position = agent.position
-#         depth_distance = int(
-#             calculate_distance(current_position.x, current_position.y, current_position.z, end_x, end_y, end_z)
-#         )
-#         if depth_distance < 1:
-#             break
-
-#         # 奥行方向の掘削
-#         depth_count = 0
-#         while True:
-#             current_position = agent.position
-#             depth_distance = int(
-#                 calculate_distance(
-#                     current_position.x,
-#                     current_position.y,
-#                     current_position.z,
-#                     current_position.x,
-#                     current_position.y,
-#                     current_position.z,
-#                 )
-#             )
-
-#             for dep in range(depth_distance):
-#                 depth_count += 1
-#                 for w in range(width):
-
-#                     # 高さ方向の掘削
-#                     height_count = 0
-#                     if u:
-#                         agent_put_block("up")
-
-#                     while True:
-#                         current_position = agent.position
-#                         height_distance = int(
-#                             calculate_distance(
-#                                 current_position.x,
-#                                 current_position.y,
-#                                 current_position.z,
-#                                 current_position.x,
-#                                 end_y,
-#                                 current_position.z,
-#                             )
-#                         )
-#                         if height_distance < 1:
-#                             break
-#                         for h in range(height_distance):
-#                             height_count += 1
-#                             # success_count += 1
-#                             # agent.say(
-#                             #     f"success: {format(success_count/total_count*100, '.2f')}%, w: {w}/{width}, h: {h}/{height}, d: {dep}/{depth}"
-#                             # )
-#                             if safe or (f and d == depth - 1):
-#                                 agent_put_block("forward")
-#                             if l and w == 0:
-#                                 agent_put_block("left")
-#                             if r and w == (width - 1):
-#                                 agent_put_block("right")
-#                             if b and d == 0:
-#                                 agent_put_block("back")
-#                             if h < height - 1:
-#                                 agent_move("down", 1, True, True)
-#                                 if water:
-#                                     block_liquid(directions=["up", "left", "right", "down"])
-#                                     block_liquid(
-#                                         directions=["forward", "back"],
-#                                         block_name_pattern=re.compile(r"^(?:water|lava)$"),
-#                                         ignore_flow=True,
-#                                     )
-#                     if d:
-#                         agent_put_block("down")
-
-#                     if water:
-#                         for i in range(height - 1):
-#                             if agent.detect("back"):
-#                                 agent.destroy("back")
-#                                 agent.collect()
-#                             agent_move(direction="up", count=1, is_destroy=True, is_collect=True)
-#                         if agent.detect("back"):
-#                             agent.destroy("back")
-#                             agent.collect()
-#                     else:
-#                         agent_move("up", height - 1, True, True)
-
-#                     if w < width - 1:
-#                         agent_move("right", 1, True, True)
-#                         if water:
-#                             block_liquid(directions=["up", "left", "right", "down"])
-#                             block_liquid(
-#                                 directions=["forward", "back"],
-#                                 block_name_pattern=re.compile(r"^(?:water|lava)$"),
-#                                 ignore_flow=True,
-#                             )
-#                 agent_move("left", width - 1, True, True)
-#                 if dep < depth - 1:
-#                     agent_move("forward", 1, True, True)
-#                     if water:
-#                         block_liquid(directions=["up", "left", "right", "down"])
-#                         block_liquid(
-#                             directions=["forward", "back"],
-#                             block_name_pattern=re.compile(r"^(?:water|lava)$"),
-#                             ignore_flow=True,
-#                         )
-#     agent_move("down", height - 1, True, True)
-
-
 # 高速に通路を掘る
 def fast_dig(count: int = 1) -> None:
     for i in range(count):
@@ -964,9 +819,6 @@ def fast_dig(count: int = 1) -> None:
             agent_put_block("down")
         else:
             agent.move("forward")
-
-
-# def build_hole(width: int, height: int, depth: int, *, safe: bool = False) -> None:
 
 
 def build_ladder(direction: str, step: int = 9999, safe: bool = False) -> bool:
@@ -1156,7 +1008,9 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         chunked_messages = message.split()
         command = chunked_messages[0]
         if command == "trial":  # ここに実行する実験的な処理を記述する
-            space_build = BuildSpace(width=5, height=5, depth=5, f=True, b=True, l=True, r=True, u=True, d=True, water=True)
+            space_build = BuildSpace(
+                width=5, height=5, depth=5, f=True, b=True, l=True, r=True, u=True, d=True, water=True
+            )
             space_build.build()
             agent.say("trial finish")
         elif command == "switch":
