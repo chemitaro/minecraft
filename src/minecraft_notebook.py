@@ -119,17 +119,19 @@ notify_block_list: List[NotifyBlock] = []
 class WorldType:
     name: str
     collection_location: List[int]
-    teleport_step_length: int
+    home_location: List[int]
     max_y: int
     min_y: int
 
 
 class WorldEnum(Enum):
     OVER_WORLD = WorldType(
-        name="over_world", collection_location=[-142, 77, 1248], teleport_step_length=176, max_y=320, min_y=-60
+        name="over_world", collection_location=[-142, 77, 1248], home_location=[-149, 72, 1265], max_y=320, min_y=-60
     )
-    NETHER = WorldType(name="nether", collection_location=[-11, 88, 160], teleport_step_length=22, max_y=122, min_y=5)
-    THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], teleport_step_length=25, max_y=122, min_y=5)
+    NETHER = WorldType(
+        name="nether", collection_location=[-11, 88, 160], home_location=[-11, 88, 160], max_y=122, min_y=5
+    )
+    THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], home_location=[0, 0, 0], max_y=122, min_y=5)
 
 
 current_world_enum = WorldEnum.OVER_WORLD
@@ -188,6 +190,19 @@ def calculate_distance(start_x: int, start_y: int, start_z: int, end_x: int, end
         float: 2点間の距離
     """
     return ((end_x - start_x) ** 2 + (end_y - start_y) ** 2 + (end_z - start_z) ** 2) ** 0.5
+
+
+# home_location からの距離を計算する
+def calculate_distance_from_home_location() -> float:
+    """home_location からの距離を計算する"""
+    return calculate_distance(
+        player.position.x,
+        player.position.y,
+        player.position.z,
+        current_world_enum.value.home_location[0],
+        current_world_enum.value.home_location[1],
+        current_world_enum.value.home_location[2],
+    )
 
 
 def show_chunk_range() -> None:
@@ -1062,7 +1077,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
         elif command == "flint":
             generate_flint()
         elif command == "space":
-            build_space(
+            BuildSpace(
                 int(chunked_messages[1]),
                 int(chunked_messages[2]),
                 int(chunked_messages[3]),
@@ -1073,7 +1088,7 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
                 f=("f" in chunked_messages),
                 safe=("safe" in chunked_messages),
                 water=("water" in chunked_messages),
-            )
+            ).build()
         elif command == "fast_dig":
             fast_dig(int(chunked_messages[1]))
         elif command == "ladder":
@@ -1082,6 +1097,8 @@ def process_chat_command(message: str, sender: str, receiver: str, message_type:
             )
         elif command == "chunk":
             show_chunk_range()
+        elif command == "distance":
+            player.say(f"distance : {calculate_distance_from_home_location()}")
 
 
 agent.say(player_mention + "run script")
