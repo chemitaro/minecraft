@@ -6,6 +6,28 @@ from dataclasses import dataclass
 from enum import Enum, IntEnum
 from typing import List, Optional, Tuple, Union
 
+
+@dataclass
+class WorldType:
+    name: str
+    collection_location: List[int]
+    home_location: List[int]
+    max_y: int
+    min_y: int
+
+
+class WorldEnum(Enum):
+    OVER_WORLD = WorldType(
+        name="over_world", collection_location=[-142, 77, 1248], home_location=[-149, 72, 1265], max_y=320, min_y=-60
+    )
+    NETHER = WorldType(
+        name="nether", collection_location=[-11, 88, 160], home_location=[-11, 88, 160], max_y=122, min_y=5
+    )
+    THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], home_location=[0, 0, 0], max_y=122, min_y=5)
+
+
+current_world_enum = WorldEnum.OVER_WORLD
+
 ignore_block_name_pattern = re.compile(
     r"^(?:air|deepslate|stone|netherrack|water|flowing_water|bubble_column|lava|flowing_lava|fire|granite|dirt|diorite|baslate|tuff|andesite|gravel|blackstone|grass_block|farmland|grass_path|podzol|mycelium|mud|clay|short_grass|tall_grass|seagrass|oak_leaves|spruce_leaves|birch_leaves|jungle_leaves|acacia_leaves|dark_oak_leaves|mangrove_leaves|cherry_leaves|pale_oak_leaves|azalea_leaves|azalea_leaves_flowered|bedrock)$"
 )
@@ -113,28 +135,6 @@ class NotifyBlock:
 
 
 notify_block_list: List[NotifyBlock] = []
-
-
-@dataclass
-class WorldType:
-    name: str
-    collection_location: List[int]
-    home_location: List[int]
-    max_y: int
-    min_y: int
-
-
-class WorldEnum(Enum):
-    OVER_WORLD = WorldType(
-        name="over_world", collection_location=[-142, 77, 1248], home_location=[-149, 72, 1265], max_y=320, min_y=-60
-    )
-    NETHER = WorldType(
-        name="nether", collection_location=[-11, 88, 160], home_location=[-11, 88, 160], max_y=122, min_y=5
-    )
-    THE_END = WorldType(name="the_end", collection_location=[0, 0, 0], home_location=[0, 0, 0], max_y=122, min_y=5)
-
-
-current_world_enum = WorldEnum.OVER_WORLD
 
 
 def switch_world_type() -> WorldEnum:  # Worldの種類を変更する
